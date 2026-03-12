@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/item_history.xml",
+        "source": "com.tobacco.detection.app-main-47:/layout/item_history.xml"
+    },
+    {
+        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/dialog_settings.xml",
+        "source": "com.tobacco.detection.app-main-47:/layout/dialog_settings.xml"
+    },
+    {
+        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/activity_main.xml",
+        "source": "com.tobacco.detection.app-main-47:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/activity_history.xml",
+        "source": "com.tobacco.detection.app-main-47:/layout/activity_history.xml"
+    }
+]

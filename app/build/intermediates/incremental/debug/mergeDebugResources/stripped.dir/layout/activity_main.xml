@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".ui.MainActivity">
+
+    <!-- 欢迎页面布局 -->
+    <LinearLayout
+        android:id="@+id/welcomeLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp">
+
+        <!-- 图标 -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_marginBottom="32dp"
+            android:src="@drawable/ic_launcher_foreground"
+            android:background="@drawable/circle_background"
+            android:contentDescription="@string/app_name" />
+
+        <!-- 标题 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/welcome_title"
+            style="@style/WelcomeTitle"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 副标题 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/welcome_subtitle"
+            style="@style/WelcomeSubtitle"
+            android:layout_marginBottom="48dp" />
+
+        <!-- 主按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnStartDetection"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/start_detection"
+            style="@style/PrimaryButton"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 次按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewHistory"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/view_history"
+            style="@style/SecondaryButton"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 设置按钮 -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            android:layout_width="280dp"
+            android:layout_height="wrap_content"
+            android:text="@string/settings"
+            style="@style/SecondaryButton" />
+
+    </LinearLayout>
+
+    <!-- 检测页面布局 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/detectionLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone">
+
+        <!-- 相机预览 -->
+        <androidx.camera.view.PreviewView
+            android:id="@+id/previewView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toTopOf="@id/controlPanel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintDimensionRatio="4:3" />
+
+        <!-- 操作提示 -->
+        <TextView
+            android:id="@+id/tvInstruction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/place_tobacco"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:background="@color/overlay"
+            android:padding="12dp"
+            android:layout_margin="16dp"
+            app:layout_constraintTop_toTopOf="@id/previewView"
+            app:layout_constraintStart_toStartOf="@id/previewView" />
+
+        <!-- 状态显示 -->
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:background="@color/overlay"
+            android:padding="8dp"
+            android:layout_margin="16dp"
+            app:layout_constraintTop_toTopOf="@id/previewView"
+            app:layout_constraintEnd_toEndOf="@id/previewView"
+            tools:text="就绪" />
+
+        <!-- 控制面板 -->
+        <LinearLayout
+            android:id="@+id/controlPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="16dp"
+            android:background="@color/surface"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!-- 拍摄按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCapture"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cornerRadius="40dp"
+                app:backgroundTint="@color/accent"
+                android:layout_marginEnd="32dp" />
+
+            <!-- 返回按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                app:icon="@android:drawable/ic_menu_revert"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_marginEnd="16dp" />
+
+            <!-- 切换相机按钮 -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnFlash"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                app:icon="@android:drawable/ic_menu_camera"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 结果显示对话框 -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/resultLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay"
+        android:visibility="gone">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="400dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp"
+                android:gravity="center">
+
+                <!-- 结果标题 -->
+                <TextView
+                    android:id="@+id/tvResultTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/detection_complete"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/success"
+                    android:layout_marginBottom="24dp" />
+
+                <!-- 平均宽度 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/average_width"
+                    style="@style/ResultLabel" />
+
+                <TextView
+                    android:id="@+id/tvAverageWidth"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/ResultText"
+                    android:layout_marginBottom="16dp"
+                    tools:text="0.85 mm" />
+
+                <!-- 烟丝数量 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/tobacco_count"
+                        android:textColor="@color/text_secondary"
+                        android:gravity="center" />
+
+                    <TextView
+                        android:id="@+id/tvTobaccoCount"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/text_primary"
+                        android:textStyle="bold"
+                        android:gravity="center"
+                        tools:text="30" />
+
+                </LinearLayout>
+
+                <!-- 最小/最大宽度 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/width_min"
+                            style="@style/ResultLabel" />
+
+                        <TextView
+                            android:id="@+id/tvMinWidth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold"
+                            tools:text="0.80 mm" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/width_max"
+                            style="@style/ResultLabel" />
+
+                        <TextView
+                            android:id="@+id/tvMaxWidth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/text_primary"
+                            android:textStyle="bold"
+                            tools:text="0.90 mm" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <!-- 检测时间 -->
+                <TextView
+                    android:id="@+id/tvDetectionTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="8dp"
+                    tools:text="检测耗时: 2.5 秒" />
+
+                <!-- 按钮组 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="24dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnSaveResult"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/save_result"
+                        style="@style/SecondaryButton"
+                        android:layout_marginEnd="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUploadResult"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/upload_result"
+                        android:layout_marginEnd="8dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnNewDetection"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/new_detection"
+                        style="@style/PrimaryButton" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- 加载中显示 -->
+    <FrameLayout
+        android:id="@+id/loadingLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/overlay"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp"
+            android:background="@drawable/rounded_background">
+
+            <ProgressBar
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tvLoadingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/detecting"
+                android:textColor="@color/white"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 背景圆形 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"/>
+    <!-- 烟丝图标 - 简化的线条 -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M35,54 Q40,44 54,44 Q68,44 73,54 Q68,64 54,64 Q40,64 35,54 Z"/>
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M38,50 Q42,44 54,44 Q66,44 70,50"
+        android:strokeWidth="2"
+        android:strokeColor="#1976D2"/>
+    <!-- 测量标尺图标 -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M45,68 L63,68 L63,72 L45,72 Z"/>
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M47,66 L47,74 M51,67 L51,73 M55,66 L55,74 M59,67 L59,73 M63,66 L63,74"/>
+</vector>

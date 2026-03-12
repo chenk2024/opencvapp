@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- App主题颜色 -->
+    <color name="primary">#FF1976D2</color>
+    <color name="primary_dark">#FF1565C0</color>
+    <color name="primary_light">#FF42A5F5</color>
+    <color name="accent">#FFFF5722</color>
+    <color name="background">#FFF5F5F5</color>
+    <color name="surface">#FFFFFFFF</color>
+    <color name="error">#FFF44336</color>
+    <color name="success">#FF4CAF50</color>
+    <color name="warning">#FFFFC107</color>
+    <color name="text_primary">#FF212121</color>
+    <color name="text_secondary">#FF757575</color>
+    <color name="divider">#FFBDBDBD</color>
+    
+    <!-- 检测状态颜色 -->
+    <color name="status_detecting">#FFFF9800</color>
+    <color name="status_success">#FF4CAF50</color>
+    <color name="status_failed">#FFF44336</color>
+    
+    <!-- 覆盖层颜色 -->
+    <color name="overlay">#80000000</color>
+    <color name="contour_color">#FF00FF00</color>
+    <color name="measure_line">#FFFF0000</color>
+</resources>

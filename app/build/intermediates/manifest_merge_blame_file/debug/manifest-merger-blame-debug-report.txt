@@ -1,0 +1,199 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.tobacco.detection"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="26"
+9        android:targetSdkVersion="34" />
+10
+11    <!-- 相机权限 -->
+12    <uses-permission android:name="android.permission.CAMERA" />
+12-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:6:5-65
+12-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:6:22-62
+13
+14    <!-- 存储权限 -->
+15    <uses-permission
+15-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:9:5-10:38
+16        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+16-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:9:22-78
+17        android:maxSdkVersion="28" />
+17-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:10:9-35
+18    <uses-permission
+18-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:11:5-12:38
+19        android:name="android.permission.READ_EXTERNAL_STORAGE"
+19-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:11:22-77
+20        android:maxSdkVersion="32" />
+20-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:12:9-35
+21
+22    <!-- 网络权限 -->
+23    <uses-permission android:name="android.permission.INTERNET" />
+23-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:15:5-67
+23-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:15:22-64
+24    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+24-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:16:5-79
+24-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:16:22-76
+25
+26    <!-- 相机特性 -->
+27    <uses-feature
+27-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:19:5-84
+28        android:name="android.hardware.camera"
+28-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:19:19-57
+29        android:required="true" />
+29-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:19:58-81
+30    <uses-feature
+30-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:20:5-95
+31        android:name="android.hardware.camera.autofocus"
+31-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:20:19-67
+32        android:required="false" />
+32-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:20:68-92
+33
+34    <permission
+34-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:22:5-24:47
+35        android:name="com.tobacco.detection.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+35-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:23:9-81
+36        android:protectionLevel="signature" />
+36-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:24:9-44
+37
+38    <uses-permission android:name="com.tobacco.detection.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+38-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:26:5-97
+38-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:26:22-94
+39
+40    <application
+40-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:22:5-49:19
+41        android:allowBackup="true"
+41-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:23:9-35
+42        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+42-->[androidx.core:core:1.12.0] C:\Users\Administrator\.gradle\caches\transforms-3\9643920afc401bf92410edb017e2095b\transformed\core-1.12.0\AndroidManifest.xml:28:18-86
+43        android:dataExtractionRules="@xml/data_extraction_rules"
+43-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:24:9-65
+44        android:debuggable="true"
+45        android:extractNativeLibs="false"
+46        android:fullBackupContent="@xml/backup_rules"
+46-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:25:9-54
+47        android:icon="@mipmap/ic_launcher"
+47-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:26:9-43
+48        android:label="@string/app_name"
+48-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:27:9-41
+49        android:roundIcon="@mipmap/ic_launcher_round"
+49-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:28:9-54
+50        android:supportsRtl="true"
+50-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:29:9-35
+51        android:testOnly="true"
+52        android:theme="@style/Theme.TobaccoDetection" >
+52-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:30:9-54
+53        <activity
+53-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:33:9-42:20
+54            android:name="com.tobacco.detection.ui.MainActivity"
+54-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:34:13-44
+55            android:configChanges="orientation|screenSize"
+55-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:37:13-59
+56            android:exported="true"
+56-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:35:13-36
+57            android:screenOrientation="landscape" >
+57-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:36:13-50
+58            <intent-filter>
+58-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:38:13-41:29
+59                <action android:name="android.intent.action.MAIN" />
+59-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:39:17-69
+59-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:39:25-66
+60
+61                <category android:name="android.intent.category.LAUNCHER" />
+61-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:40:17-77
+61-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:40:27-74
+62            </intent-filter>
+63        </activity>
+64        <activity
+64-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:44:9-47:53
+65            android:name="com.tobacco.detection.ui.HistoryActivity"
+65-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:45:13-47
+66            android:exported="false"
+66-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:46:13-37
+67            android:screenOrientation="landscape" />
+67-->D:\day7\shibie\v3\app\src\main\AndroidManifest.xml:47:13-50
+68
+69        <service
+69-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:24:9-33:19
+70            android:name="androidx.camera.core.impl.MetadataHolderService"
+70-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:25:13-75
+71            android:enabled="false"
+71-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:26:13-36
+72            android:exported="false" >
+72-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:27:13-37
+73            <meta-data
+73-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:30:13-32:89
+74                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+74-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:31:17-103
+75                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+75-->[androidx.camera:camera-camera2:1.3.1] C:\Users\Administrator\.gradle\caches\transforms-3\9fe06c0c2b23f85071464422ed92bbce\transformed\camera-camera2-1.3.1\AndroidManifest.xml:32:17-86
+76        </service>
+77
+78        <provider
+78-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:24:9-32:20
+79            android:name="androidx.startup.InitializationProvider"
+79-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:25:13-67
+80            android:authorities="com.tobacco.detection.androidx-startup"
+80-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:26:13-68
+81            android:exported="false" >
+81-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:27:13-37
+82            <meta-data
+82-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:29:13-31:52
+83                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+83-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:30:17-75
+84                android:value="androidx.startup" />
+84-->[androidx.emoji2:emoji2:1.2.0] C:\Users\Administrator\.gradle\caches\transforms-3\a47287aa1a4f72e566c4fd5b707075b7\transformed\emoji2-1.2.0\AndroidManifest.xml:31:17-49
+85            <meta-data
+85-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Administrator\.gradle\caches\transforms-3\a6175ec3b15616591a98ad3b2e1af4de\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:29:13-31:52
+86                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+86-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Administrator\.gradle\caches\transforms-3\a6175ec3b15616591a98ad3b2e1af4de\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:30:17-78
+87                android:value="androidx.startup" />
+87-->[androidx.lifecycle:lifecycle-process:2.7.0] C:\Users\Administrator\.gradle\caches\transforms-3\a6175ec3b15616591a98ad3b2e1af4de\transformed\lifecycle-process-2.7.0\AndroidManifest.xml:31:17-49
+88            <meta-data
+88-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:29:13-31:52
+89                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+89-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:30:17-85
+90                android:value="androidx.startup" />
+90-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:31:17-49
+91        </provider>
+92
+93        <receiver
+93-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:34:9-52:20
+94            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+94-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:35:13-76
+95            android:directBootAware="false"
+95-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:36:13-44
+96            android:enabled="true"
+96-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:37:13-35
+97            android:exported="true"
+97-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:38:13-36
+98            android:permission="android.permission.DUMP" >
+98-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:39:13-57
+99            <intent-filter>
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:40:13-42:29
+100                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:17-91
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:41:25-88
+101            </intent-filter>
+102            <intent-filter>
+102-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:43:13-45:29
+103                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:17-85
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:44:25-82
+104            </intent-filter>
+105            <intent-filter>
+105-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:46:13-48:29
+106                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:17-88
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:47:25-85
+107            </intent-filter>
+108            <intent-filter>
+108-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:49:13-51:29
+109                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:17-95
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] C:\Users\Administrator\.gradle\caches\transforms-3\d0526cdf04d2c3a3fda2a06989b48e7c\transformed\profileinstaller-1.3.0\AndroidManifest.xml:50:25-92
+110            </intent-filter>
+111        </receiver>
+112    </application>
+113
+114</manifest>
