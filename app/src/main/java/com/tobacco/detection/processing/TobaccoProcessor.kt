@@ -182,9 +182,9 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     }
 
     /**
-     * 三角形法二值化
-     * 使用Otsu's方法实现自动阈值选择
-     * 针对黄色烟丝在黑色背景上进行优化
+     * 二值化处理
+     * 优先使用颜色阈值检测黄色烟丝，若失败则回退到三角形法二值化
+     * 符合 README 规范：三角形法二值化
      */
     private fun thresholdImage(grayMat: Mat, srcMat: Mat? = null): Mat {
         // 首先尝试使用颜色空间检测黄色烟丝
@@ -199,9 +199,10 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             return colorBasedMat
         }
 
-        // 否则使用传统的Otsu二值化
+        // 颜色检测失败时，使用三角形法二值化（符合 README 规范）
+        // 三角形法适用于目标和背景灰度差异明显的场景
         val binaryMat = Mat()
-        Imgproc.threshold(grayMat, binaryMat, 0.0, 255.0, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU)
+        Imgproc.threshold(grayMat, binaryMat, 0.0, 255.0, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_TRIANGLE)
         return binaryMat
     }
 
@@ -372,7 +373,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
 
     /**
      * 处理轮廓，计算每根烟丝的长度和宽度
-     * 使用多种方法综合计算：
+     * 使用 Douglas-Peucker 多边形拟合简化轮廓（符合 README 规范）
+     * 然后使用多种方法综合计算：
      * 1. 最小外接矩形（适合直线烟丝）
      * 2. 距离变换分析（适合各种形态）
      * 3. 投影法（适合曲线烟丝）
@@ -387,16 +389,23 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             if (area < config.minContourArea || area > config.maxContourArea) {
                 continue
             }
-            
+
+            // 使用 Douglas-Peucker 多边形拟合简化轮廓（符合 README 规范）
+            // 使用配置中的 epsilon 参数
+            val simplifiedContour = douglasPeucker(contour, config.douglasPeuckerEpsilon)
+
+            // 将简化后的轮廓转换回 MatOfPoint
+            val simplifiedMatOfPoint = MatOfPoint(*simplifiedContour.toArray())
+
             // 获取最小外接矩形
-            val rect = Imgproc.minAreaRect(MatOfPoint2f(*contour.toArray()))
-            
+            val rect = Imgproc.minAreaRect(simplifiedContour)
+
             // 计算烟丝宽度（多种方法融合）
-            val widthInfo = calculateTobaccoWidth(contour, rect, binaryMat)
-            
+            val widthInfo = calculateTobaccoWidth(simplifiedMatOfPoint, rect, binaryMat)
+
             // 计算烟丝长度
-            val lengthInfo = calculateTobaccoLength(contour, rect, binaryMat)
-            
+            val lengthInfo = calculateTobaccoLength(simplifiedMatOfPoint, rect, binaryMat)
+
             if (widthInfo != null && widthInfo.first > 0) {
                 val widthMm = widthInfo.first * config.pixelToMmRatio
                 val lengthMm = if (lengthInfo != null && lengthInfo.first > 0) {
@@ -405,7 +414,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                     // 如果无法计算长度，使用外接矩形的长边作为估计
                     max(rect.size.width, rect.size.height) * config.pixelToMmRatio
                 }
-                
+
                 tobaccoInfos.add(
                     TobaccoInfo(
                         index = index,
@@ -413,12 +422,12 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                         widthMm = widthMm,
                         lengthPixels = lengthInfo?.first ?: max(rect.size.width, rect.size.height),
                         lengthMm = lengthMm,
-                        contourPoints = contour.toList().map { PointData(it.x.toDouble(), it.y.toDouble()) }
+                        contourPoints = simplifiedMatOfPoint.toList().map { PointData(it.x.toDouble(), it.y.toDouble()) }
                     )
                 )
             }
         }
-        
+
         return tobaccoInfos
     }
 
