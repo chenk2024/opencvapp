@@ -122,7 +122,50 @@ data class ProcessingConfig(
     val douglasPeuckerEpsilon: Double = 2.0,
     
     // 形态学操作核大小
-    val morphKernelSize: Int = 3
+    val morphKernelSize: Int = 3,
+    
+    // 宽度采样点数（法线中位数）
+    val widthSampleCount: Int = 8,
+    
+    // 骨架提取阈值
+    val skeletonThreshold: Int = 10
+)
+
+/**
+ * 基准测试数据集
+ * 用于存放带有真值的测试图像和标注数据
+ */
+data class BenchmarkDataset(
+    val id: String,
+    val name: String,
+    val imagePath: String,
+    val groundTruths: List<GroundTruth>
+)
+
+/**
+ * 单个烟丝的真值数据
+ */
+data class GroundTruth(
+    val tobaccoIndex: Int,
+    val widthMm: Double,
+    val lengthMm: Double,
+    val notes: String = ""
+)
+
+/**
+ * 基准测试结果汇总
+ */
+data class BenchmarkSummary(
+    val datasetName: String,
+    val totalSamples: Int,
+    val widthMAE: Double,         // 宽度平均绝对误差 (mm)
+    val widthRMSE: Double,        // 宽度均方根误差 (mm)
+    val width95Percentile: Double, // 宽度95分位误差 (mm)
+    val lengthMAE: Double,        // 长度平均绝对误差 (mm)
+    val lengthRMSE: Double,       // 长度均方根误差 (mm)
+    val length95Percentile: Double, // 长度95分位误差 (mm)
+    val successRate: Double,       // 成功率 (误差<=0.01mm的比例)
+    val avgProcessingTimeMs: Double // 平均处理时间 (ms)
 )
 
 /**

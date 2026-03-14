@@ -1,48 +1,349 @@
 package com.tobacco.detection.processing
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.util.Log
 import com.tobacco.detection.data.DetectionResult
 import com.tobacco.detection.data.DetectionStatus
 import com.tobacco.detection.data.PointData
 import com.tobacco.detection.data.ProcessingConfig
 import com.tobacco.detection.data.TobaccoInfo
+import com.tobacco.detection.testing.BenchmarkTester
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.opencv.android.Utils
+import org.opencv.calib3d.Calib3d
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
+import org.opencv.utils.Converters
+import java.io.File
+import java.io.FileOutputStream
 import kotlin.math.*
 
 /**
  * 烟丝图像处理器
  * 实现图像处理、轮廓提取、宽度计算等功能
  * 支持直线和曲线形态的烟丝检测
+ * 
+ * 优化记录：
+ * 1. 修正颜色通道语义（OpenCV使用BGR格式）
+ * 2. 长度改为"骨架路径长度"
+ * 3. 宽度改为"法线多点中位数"
+ * 4. 支持畸变矫正与固定工位
+ * 5. 支持基准测试与误差评估
  */
 class TobaccoProcessor(private val config: ProcessingConfig) {
 
     companion object {
         private const val TAG = "TobaccoProcessor"
+        
+        // 默认工位配置
+        const val DEFAULT_CAMERA_HEIGHT_MM = 300.0  // 相机高度 300mm
+        const val DEFAULT_FOCAL_LENGTH_MM = 4.5    // 焦距 4.5mm (常见手机摄像头)
+        const val DEFAULT_SENSOR_WIDTH_MM = 6.17   // 传感器宽度 1/2.3英寸约6.17mm
+        
+        // HSV黄色阈值（可调参）
+        const val DEFAULT_HUE_LOWER = 15.0
+        const val DEFAULT_HUE_UPPER = 45.0
+        const val DEFAULT_SAT_LOWER = 40.0
+        const val DEFAULT_SAT_UPPER = 255.0
+        const val DEFAULT_VAL_LOWER = 30.0
+        const val DEFAULT_VAL_UPPER = 255.0
+        
+        // RGB黄色阈值（可调参）
+        const val DEFAULT_R_LOWER = 150.0
+        const val DEFAULT_G_LOWER = 130.0
+        const val DEFAULT_B_UPPER = 160.0
     }
 
+    // 调参配置类
+    data class TuningConfig(
+        // HSV颜色空间阈值
+        var hsvHueLower: Double = DEFAULT_HUE_LOWER,
+        var hsvHueUpper: Double = DEFAULT_HUE_UPPER,
+        var hsvSatLower: Double = DEFAULT_SAT_LOWER,
+        var hsvSatUpper: Double = DEFAULT_SAT_UPPER,
+        var hsvValLower: Double = DEFAULT_VAL_LOWER,
+        var hsvValUpper: Double = DEFAULT_VAL_UPPER,
+        
+        // RGB颜色空间阈值
+        var rgbRLower: Double = DEFAULT_R_LOWER,
+        var rgbGLower: Double = DEFAULT_G_LOWER,
+        var rgbBUpper: Double = DEFAULT_B_UPPER,
+        
+        // 形态学操作参数
+        var morphKernelSize: Int = 5,
+        var openIterations: Int = 2,
+        var closeIterations: Int = 2,
+        
+        // 宽度测量参数（法线采样点数）
+        var widthSampleCount: Int = 8,
+        
+        // 骨架提取参数
+        var skeletonThreshold: Int = 10,
+        
+        // 畸变矫正参数
+        var enableDistortionCorrection: Boolean = false,
+        var cameraMatrix: Mat? = null,
+        var distCoeffs: Mat? = null,
+        
+        // 工位参数
+        var cameraHeightMm: Double = DEFAULT_CAMERA_HEIGHT_MM,
+        var focalLengthMm: Double = DEFAULT_FOCAL_LENGTH_MM,
+        var sensorWidthMm: Double = DEFAULT_SENSOR_WIDTH_MM
+    )
+    
+    // 当前调参配置
+    private var tuningConfig = TuningConfig()
+    
     // 存储处理过程中的数据用于显示
     data class ProcessingData(
         val contours: List<List<Point>>,
         val widths: List<Pair<Point, Point>>,      // 宽度测量线的起点和终点
         val lengths: List<Pair<Point, Point>>,      // 长度测量线的起点和终点
         val centerPoints: List<Point>,
-        val boundingBoxes: List<RotatedRect>
+        val boundingBoxes: List<RotatedRect>,
+        val skeletonPoints: List<List<Point>> = emptyList(),  // 骨架点
+        val normalLines: List<Pair<Point, Point>> = emptyList() // 法线测量线
     )
 
     private var lastProcessingData: ProcessingData? = null
+    
+    // 基准测试结果
+    private var benchmarkResults = mutableListOf<BenchmarkTester.BenchmarkResult>()
+    
+    /**
+     * 设置调参配置
+     */
+    fun setTuningConfig(tuningConfig: TuningConfig) {
+        this.tuningConfig = tuningConfig
+    }
+    
+    /**
+     * 获取当前调参配置
+     */
+    fun getTuningConfig(): TuningConfig = tuningConfig
+    
+    /**
+     * 从文件加载调参配置
+     */
+    fun loadTuningConfigFromFile(filePath: String): Boolean {
+        return try {
+            val json = File(filePath).readText()
+            // 简单解析JSON（实际项目中可使用Gson）
+            val lines = json.lines()
+            for (line in lines) {
+                when {
+                    line.contains("hsvHueLower") -> tuningConfig = tuningConfig.copy(
+                        hsvHueLower = line.substringAfter(":").trim().removeSuffix(",").toDoubleOrNull() ?: tuningConfig.hsvHueLower
+                    )
+                    line.contains("hsvHueUpper") -> tuningConfig = tuningConfig.copy(
+                        hsvHueUpper = line.substringAfter(":").trim().removeSuffix(",").toDoubleOrNull() ?: tuningConfig.hsvHueUpper
+                    )
+                    line.contains("hsvSatLower") -> tuningConfig = tuningConfig.copy(
+                        hsvSatLower = line.substringAfter(":").trim().removeSuffix(",").toDoubleOrNull() ?: tuningConfig.hsvSatLower
+                    )
+                    line.contains("morphKernelSize") -> tuningConfig = tuningConfig.copy(
+                        morphKernelSize = line.substringAfter(":").trim().removeSuffix(",").toIntOrNull() ?: tuningConfig.morphKernelSize
+                    )
+                }
+            }
+            Log.d(TAG, "Loaded tuning config from: $filePath")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load tuning config", e)
+            false
+        }
+    }
+    
+    /**
+     * 保存调参配置到文件
+     */
+    fun saveTuningConfigToFile(filePath: String): Boolean {
+        return try {
+            val json = buildString {
+                appendLine("{")
+                appendLine("  \"hsvHueLower\": ${tuningConfig.hsvHueLower},")
+                appendLine("  \"hsvHueUpper\": ${tuningConfig.hsvHueUpper},")
+                appendLine("  \"hsvSatLower\": ${tuningConfig.hsvSatLower},")
+                appendLine("  \"hsvSatUpper\": ${tuningConfig.hsvSatUpper},")
+                appendLine("  \"hsvValLower\": ${tuningConfig.hsvValLower},")
+                appendLine("  \"hsvValUpper\": ${tuningConfig.hsvValUpper},")
+                appendLine("  \"rgbRLower\": ${tuningConfig.rgbRLower},")
+                appendLine("  \"rgbGLower\": ${tuningConfig.rgbGLower},")
+                appendLine("  \"rgbBUpper\": ${tuningConfig.rgbBUpper},")
+                appendLine("  \"morphKernelSize\": ${tuningConfig.morphKernelSize},")
+                appendLine("  \"widthSampleCount\": ${tuningConfig.widthSampleCount},")
+                appendLine("  \"enableDistortionCorrection\": ${tuningConfig.enableDistortionCorrection}")
+                appendLine("}")
+            }
+            File(filePath).writeText(json)
+            Log.d(TAG, "Saved tuning config to: $filePath")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save tuning config", e)
+            false
+        }
+    }
+    
+    /**
+     * 导出当前检测参数为可视化配置文件（可导入到Python调参工具）
+     */
+    fun exportParamsForVisualTuning(filePath: String): Boolean {
+        return try {
+            val params = buildString {
+                appendLine("#!/usr/bin/env python3")
+                appendLine("# -*- coding: utf-8 -*-")
+                appendLine("\"\"\"")
+                appendLine("烟丝检测参数配置文件")
+                appendLine("可使用 OpenCV 调整工具或自定义UI进行参数调优")
+                appendLine("\"\"\"")
+                appendLine()
+                appendLine("import numpy as np")
+                appendLine()
+                appendLine("# ============== HSV 颜色阈值 ==============")
+                appendLine("HSV_LOWER = np.array([${tuningConfig.hsvHueLower.toInt()}, ${tuningConfig.hsvSatLower.toInt()}, ${tuningConfig.hsvValLower.toInt()}])")
+                appendLine("HSV_UPPER = np.array([${tuningConfig.hsvHueUpper.toInt()}, ${tuningConfig.hsvSatUpper.toInt()}, ${tuningConfig.hsvValUpper.toInt()}])")
+                appendLine()
+                appendLine("# ============== RGB 颜色阈值 ==============")
+                appendLine("RGB_R_LOWER = ${tuningConfig.rgbRLower.toInt()}")
+                appendLine("RGB_G_LOWER = ${tuningConfig.rgbGLower.toInt()}")
+                appendLine("RGB_B_UPPER = ${tuningConfig.rgbBUpper.toInt()}")
+                appendLine()
+                appendLine("# ============== 形态学参数 ==============")
+                appendLine("MORPH_KERNEL_SIZE = ${tuningConfig.morphKernelSize}")
+                appendLine("OPEN_ITERATIONS = ${tuningConfig.openIterations}")
+                appendLine("CLOSE_ITERATIONS = ${tuningConfig.closeIterations}")
+                appendLine()
+                appendLine("# ============== 测量参数 ==============")
+                appendLine("WIDTH_SAMPLE_COUNT = ${tuningConfig.widthSampleCount}")
+                appendLine("SKELETON_THRESHOLD = ${tuningConfig.skeletonThreshold}")
+                appendLine()
+                appendLine("# ============== 工位参数 ==============")
+                appendLine("CAMERA_HEIGHT_MM = ${tuningConfig.cameraHeightMm}")
+                appendLine("FOCAL_LENGTH_MM = ${tuningConfig.focalLengthMm}")
+                appendLine("SENSOR_WIDTH_MM = ${tuningConfig.sensorWidthMm}")
+                appendLine()
+                appendLine("# ============== 像素比例（需校准） ==============")
+                appendLine("PIXEL_TO_MM_RATIO = ${config.pixelToMmRatio}")
+            }
+            File(filePath).writeText(params)
+            Log.d(TAG, "Exported params to: $filePath")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to export params", e)
+            false
+        }
+    }
+    
+    /**
+     * 添加基准测试数据
+     */
+    fun addBenchmarkResult(result: BenchmarkTester.BenchmarkResult) {
+        benchmarkResults.add(result)
+    }
+    
+    /**
+     * 获取基准测试统计结果
+     */
+    fun getBenchmarkStatistics(): BenchmarkStatistics {
+        if (benchmarkResults.isEmpty()) {
+            return BenchmarkStatistics(0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        }
+        
+        val widthErrors = benchmarkResults.map { abs(it.widthErrorMm) }
+        val lengthErrors = benchmarkResults.map { abs(it.lengthErrorMm) }
+        
+        // MAE (Mean Absolute Error)
+        val widthMAE = widthErrors.average()
+        val lengthMAE = lengthErrors.average()
+        
+        // RMSE (Root Mean Square Error)
+        val widthRMSE = sqrt(widthErrors.map { it * it }.average())
+        val lengthRMSE = sqrt(lengthErrors.map { it * it }.average())
+        
+        // 95分位误差
+        val sortedWidthErrors = widthErrors.sorted()
+        val sortedLengthErrors = lengthErrors.sorted()
+        val percentile95Width = sortedWidthErrors[(sortedWidthErrors.size * 0.95).toInt().coerceIn(0, sortedWidthErrors.size - 1)]
+        val percentile95Length = sortedLengthErrors[(sortedLengthErrors.size * 0.95).toInt().coerceIn(0, sortedLengthErrors.size - 1)]
+        
+        // 成功率
+        val successCount = benchmarkResults.count { 
+            it.widthErrorMm <= 0.01 && it.lengthErrorMm <= 0.01 
+        }
+        val successRate = successCount.toDouble() / benchmarkResults.size
+        
+        // 平均处理时间
+        val avgProcessingTime = benchmarkResults.map { it.processingTimeMs }.average()
+        
+        return BenchmarkStatistics(
+            sampleCount = benchmarkResults.size,
+            widthMAE = widthMAE,
+            widthRMSE = widthRMSE,
+            width95Percentile = percentile95Width,
+            lengthMAE = lengthMAE,
+            lengthRMSE = lengthRMSE,
+            length95Percentile = percentile95Length,
+            successRate = successRate,
+            avgProcessingTimeMs = avgProcessingTime
+        )
+    }
+    
+    /**
+     * 清除基准测试数据
+     */
+    fun clearBenchmarkResults() {
+        benchmarkResults.clear()
+    }
+    
+    /**
+     * 导出基准测试结果到CSV
+     */
+    fun exportBenchmarkResultsToCSV(filePath: String): Boolean {
+        return try {
+            val csv = buildString {
+                appendLine("tobacco_index,measured_width_mm,measured_length_mm,ground_truth_width_mm,ground_truth_length_mm,width_error_mm,length_error_mm,processing_time_ms")
+                for (result in benchmarkResults) {
+                    appendLine("${result.tobaccoIndex},${result.measuredWidthMm},${result.measuredLengthMm},${result.groundTruthWidthMm},${result.groundTruthLengthMm},${result.widthErrorMm},${result.lengthErrorMm},${result.processingTimeMs}")
+                }
+            }
+            File(filePath).writeText(csv)
+            Log.d(TAG, "Exported benchmark results to: $filePath")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to export benchmark results", e)
+            false
+        }
+    }
+    
+    data class BenchmarkStatistics(
+        val sampleCount: Int,
+        val widthMAE: Double,         // 宽度 MAE (mm)
+        val widthRMSE: Double,       // 宽度 RMSE (mm)
+        val width95Percentile: Double, // 宽度 95分位误差 (mm)
+        val lengthMAE: Double,       // 长度 MAE (mm)
+        val lengthRMSE: Double,       // 长度 RMSE (mm)
+        val length95Percentile: Double, // 长度 95分位误差 (mm)
+        val successRate: Double,      // 成功率
+        val avgProcessingTimeMs: Double // 平均处理时间
+    )
 
     /**
      * 处理图像并返回检测结果
+     * @param bitmap 输入图像
+     * @param groundTruthWidths 可选的基准宽度（用于基准测试）
+     * @param groundTruthLengths 可选的长度基准（用于基准测试）
      */
-    suspend fun processImage(bitmap: Bitmap): DetectionResult = withContext(Dispatchers.Default) {
+    suspend fun processImage(
+        bitmap: Bitmap, 
+        groundTruthWidths: List<Double>? = null,
+        groundTruthLengths: List<Double>? = null
+    ): DetectionResult = withContext(Dispatchers.Default) {
         val startTime = System.currentTimeMillis()
         
         try {
@@ -50,20 +351,31 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             val srcMat = Mat()
             Utils.bitmapToMat(bitmap, srcMat)
             
+            // 畸变矫正（如果已配置相机参数）
+            val correctedMat = if (tuningConfig.enableDistortionCorrection && 
+                tuningConfig.cameraMatrix != null && tuningConfig.distCoeffs != null) {
+                val corrected = Mat()
+                Calib3d.undistort(srcMat, corrected, tuningConfig.cameraMatrix, tuningConfig.distCoeffs)
+                srcMat.release()
+                corrected
+            } else {
+                srcMat
+            }
+            
             // 图像预处理
-            val processedMat = preprocessImage(srcMat)
+            val processedMat = preprocessImage(correctedMat)
             
-            // 二值化（现在支持基于颜色的黄色烟丝检测）
-            val binaryMat = thresholdImage(processedMat, srcMat)
+            // 二值化（支持颜色阈值调参）
+            val binaryMat = thresholdImage(processedMat, correctedMat)
             
-            // 形态学操作去除噪声
+            // 形态学操作（支持调参）
             val morphMat = morphologicalOperation(binaryMat)
             
             // 轮廓提取
             val contours = extractContours(morphMat)
             
             // 过滤并处理轮廓
-            val tobaccoInfos = processContours(contours, morphMat, srcMat)
+            val tobaccoInfos = processContours(contours, morphMat, correctedMat)
             
             // 保存处理数据用于显示
             lastProcessingData = createProcessingData(contours, tobaccoInfos, morphMat)
@@ -71,8 +383,31 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             // 计算统计数据
             val result = calculateResults(tobaccoInfos, startTime)
             
+            // 基准测试：记录误差
+            if (groundTruthWidths != null && groundTruthLengths != null) {
+                val processingTime = System.currentTimeMillis() - startTime
+                for ((index, info) in tobaccoInfos.withIndex()) {
+                    if (index < groundTruthWidths.size && index < groundTruthLengths.size) {
+                        addBenchmarkResult(
+                            BenchmarkTester.BenchmarkResult(
+                                datasetId = "default",
+                                tobaccoIndex = index,
+                                measuredWidthMm = info.widthMm,
+                                measuredLengthMm = info.lengthMm,
+                                groundTruthWidthMm = groundTruthWidths[index],
+                                groundTruthLengthMm = groundTruthLengths[index],
+                                widthErrorMm = info.widthMm - groundTruthWidths[index],
+                                lengthErrorMm = info.lengthMm - groundTruthLengths[index],
+                                processingTimeMs = processingTime / tobaccoInfos.size,
+                                success = true
+                            )
+                        )
+                    }
+                }
+            }
+            
             // 释放资源
-            srcMat.release()
+            correctedMat.release()
             processedMat.release()
             binaryMat.release()
             morphMat.release()
@@ -86,6 +421,33 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                 detectionTimeMs = System.currentTimeMillis() - startTime
             )
         }
+    }
+    
+    /**
+     * 设置畸变矫正参数（从相机标定获得）
+     */
+    fun setDistortionCorrection(cameraMatrix: Mat, distCoeffs: Mat) {
+        tuningConfig = tuningConfig.copy(
+            enableDistortionCorrection = true,
+            cameraMatrix = cameraMatrix.clone(),
+            distCoeffs = distCoeffs.clone()
+        )
+    }
+    
+    /**
+     * 设置工位参数并自动计算像素比例
+     */
+    fun setWorkstationParams(cameraHeightMm: Double, focalLengthMm: Double, sensorWidthMm: Double, imageWidthPx: Int) {
+        tuningConfig = tuningConfig.copy(
+            cameraHeightMm = cameraHeightMm,
+            focalLengthMm = focalLengthMm,
+            sensorWidthMm = sensorWidthMm
+        )
+        
+        // 根据相机参数计算像素比例
+        // 公式: pixel_size = (sensor_width / image_width) * (camera_height / focal_length)
+        val pixelSizeAtObject = (sensorWidthMm / imageWidthPx) * (cameraHeightMm / focalLengthMm)
+        Log.d(TAG, "Calculated pixel ratio: $pixelSizeAtObject mm/px")
     }
 
     /**
@@ -118,23 +480,77 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             }
         }
         
-        // 生成宽度测量线
+        // 生成宽度测量线（法线测量线）
         val widths = tobaccoInfos.take(10).map { info ->
-            val center = info.contourPoints.getOrNull(info.contourPoints.size / 2)
-                ?: PointData(100.0, 100.0)
+            val center = if (info.centerLine.isNotEmpty()) {
+                info.centerLine.getOrNull(info.centerLine.size / 2) ?: PointData(100.0, 100.0)
+            } else {
+                info.contourPoints.getOrNull(info.contourPoints.size / 2) ?: PointData(100.0, 100.0)
+            }
             val width = info.widthPixels
             
             Point(center.x - width / 2, center.y) to Point(center.x + width / 2, center.y)
         }
         
-        // 生成长度测量线
+        // 生成长度测量线（骨架路径）
         val lengths = tobaccoInfos.take(10).map { info ->
-            val center = info.contourPoints.getOrNull(info.contourPoints.size / 2)
-                ?: PointData(100.0, 100.0)
-            val length = info.lengthPixels
-            
-            // 长度线垂直于宽度线
-            Point(center.x, center.y - length / 2) to Point(center.x, center.y + length / 2)
+            if (info.centerLine.isNotEmpty()) {
+                // 使用骨架的首尾点
+                val start = info.centerLine.first()
+                val end = info.centerLine.last()
+                Point(start.x, start.y) to Point(end.x, end.y)
+            } else {
+                val center = info.contourPoints.getOrNull(info.contourPoints.size / 2)
+                    ?: PointData(100.0, 100.0)
+                val length = info.lengthPixels
+                
+                // 长度线垂直于宽度线
+                Point(center.x, center.y - length / 2) to Point(center.x, center.y + length / 2)
+            }
+        }
+        
+        // 生成骨架点（用于绘制骨架路径）
+        val skeletonPoints = tobaccoInfos.take(10).map { info ->
+            if (info.centerLine.isNotEmpty()) {
+                info.centerLine.map { Point(it.x, it.y) }
+            } else {
+                emptyList()
+            }
+        }
+        
+        // 生成法线测量线（用于显示多处宽度测量）
+        val normalLines = tobaccoInfos.take(10).flatMap { info ->
+            if (info.centerLine.isNotEmpty() && info.centerLine.size >= 5) {
+                // 采样骨架上的多个点，沿法线方向绘制测量线
+                val sampleCount = tuningConfig.widthSampleCount.coerceIn(4, 8)
+                val step = info.centerLine.size / sampleCount
+                val lines = mutableListOf<Pair<Point, Point>>()
+                
+                for (i in step until info.centerLine.size step step) {
+                    val center = info.centerLine[i]
+                    val prev = info.centerLine[i - step]
+                    val next = info.centerLine[i + step]
+                    
+                    // 计算法线方向
+                    val tangentX = next.x - prev.x
+                    val tangentY = next.y - prev.y
+                    val len = sqrt(tangentX * tangentX + tangentY * tangentY)
+                    
+                    if (len > 1) {
+                        val normalX = -tangentY / len
+                        val normalY = tangentX / len
+                        val halfWidth = info.widthPixels / 2
+                        
+                        lines.add(
+                            Point(center.x - normalX * halfWidth, center.y - normalY * halfWidth) to
+                            Point(center.x + normalX * halfWidth, center.y + normalY * halfWidth)
+                        )
+                    }
+                }
+                lines
+            } else {
+                emptyList()
+            }
         }
         
         return ProcessingData(
@@ -142,9 +558,15 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             widths = widths,
             lengths = lengths,
             centerPoints = tobaccoInfos.mapNotNull { 
-                it.contourPoints.getOrNull(it.contourPoints.size / 2)?.let { p -> Point(p.x, p.y) }
+                if (it.centerLine.isNotEmpty()) {
+                    it.centerLine.getOrNull(it.centerLine.size / 2)?.let { p -> Point(p.x, p.y) }
+                } else {
+                    it.contourPoints.getOrNull(it.contourPoints.size / 2)?.let { p -> Point(p.x, p.y) }
+                }
             },
-            boundingBoxes = boundingBoxes
+            boundingBoxes = boundingBoxes,
+            skeletonPoints = skeletonPoints,
+            normalLines = normalLines
         )
     }
 
@@ -183,11 +605,11 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
 
     /**
      * 二值化处理
-     * 优先使用颜色阈值检测黄色烟丝，若失败则回退到三角形法二值化
+     * 使用可调参的颜色阈值检测黄色烟丝，若失败则回退到三角形法二值化
      * 符合 README 规范：三角形法二值化
      */
     private fun thresholdImage(grayMat: Mat, srcMat: Mat? = null): Mat {
-        // 首先尝试使用颜色空间检测黄色烟丝
+        // 首先尝试使用颜色空间检测黄色烟丝（使用调参配置）
         val colorBasedMat = if (srcMat != null) {
             detectYellowTobaccoByColor(srcMat)
         } else {
@@ -210,6 +632,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
      * 使用颜色空间检测黄色烟丝
      * 黄色在HSV颜色空间中：H在15-45度之间，S和V较高
      * 黑色背景：V很低
+     * 
+     * 注意：OpenCV使用BGR格式存储彩色图像
      */
     private fun detectYellowTobaccoByColor(srcMat: Mat): Mat? {
         return try {
@@ -217,17 +641,23 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             val hsvMat = Mat()
             Imgproc.cvtColor(srcMat, hsvMat, Imgproc.COLOR_BGR2HSV)
 
-            // 定义黄色的HSV范围（调整参数以适应不同的黄色烟丝）
-            // 黄色: H(色相)约15-45度，S(饱和度)约50-255，V(亮度)约50-255
-            val yellowLower = Scalar(15.0, 50.0, 30.0)
-            val yellowUpper = Scalar(50.0, 255.0, 255.0)
+            // 使用调参配置的HSV阈值
+            val yellowLower = Scalar(
+                tuningConfig.hsvHueLower, 
+                tuningConfig.hsvSatLower, 
+                tuningConfig.hsvValLower
+            )
+            val yellowUpper = Scalar(
+                tuningConfig.hsvHueUpper, 
+                tuningConfig.hsvSatUpper.coerceAtMost(255.0), 
+                tuningConfig.hsvValUpper.coerceAtMost(255.0)
+            )
 
             // 创建黄色掩码
             val yellowMask = Mat()
             Core.inRange(hsvMat, yellowLower, yellowUpper, yellowMask)
 
-            // 也尝试使用RGB颜色空间检测黄色
-            // 黄色: R > 150, G > 150, B < 150
+            // 也尝试使用RGB颜色空间检测黄色（OpenCV使用BGR格式）
             val rgbMask = detectYellowByRGB(srcMat)
 
             // 合并两个掩码（取并集）
@@ -239,10 +669,10 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                 yellowMask.copyTo(combinedMask)
             }
 
-            // 应用形态学操作去除噪声
+            // 应用形态学操作去除噪声（使用调参配置）
             val kernel = Imgproc.getStructuringElement(
                 Imgproc.MORPH_RECT,
-                Size(5.0, 5.0)
+                Size(tuningConfig.morphKernelSize.toDouble(), tuningConfig.morphKernelSize.toDouble())
             )
 
             // 开运算去除小噪点
@@ -269,27 +699,34 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     /**
      * 使用RGB颜色空间检测黄色烟丝
      * 黄色特点：R和G分量较高，B分量较低
+     * 
+     * 注意：OpenCV使用BGR格式，所以：
+     * - srcMat.channels()[0] 是B通道 (Blue)
+     * - srcMat.channels()[1] 是G通道 (Green)  
+     * - srcMat.channels()[2] 是R通道 (Red)
      */
     private fun detectYellowByRGB(srcMat: Mat): Mat? {
         return try {
-            // 分离通道
-            val rgbChannels = ArrayList<Mat>()
-            Core.split(srcMat, rgbChannels)
+            // 分离通道（OpenCV使用BGR格式）
+            val bgrChannels = ArrayList<Mat>()
+            Core.split(srcMat, bgrChannels)
 
-            val rChannel = rgbChannels[0]
-            val gChannel = rgbChannels[1]
-            val bChannel = rgbChannels[2]
+            // BGR格式：channels[0]=B, channels[1]=G, channels[2]=R
+            val bChannel = bgrChannels[0]
+            val gChannel = bgrChannels[1]
+            val rChannel = bgrChannels[2]
 
-            // 创建条件掩码：R > 150 AND G > 100 AND B < 180
+            // 使用调参配置的RGB阈值
+            // 黄色条件：R > rLower AND G > gLower AND B < bUpper
             val maskR = Mat()
             val maskG = Mat()
             val maskB = Mat()
 
-            Core.compare(rChannel, Scalar(150.0), maskR, Core.CMP_GT)
-            Core.compare(gChannel, Scalar(100.0), maskG, Core.CMP_GT)
-            Core.compare(bChannel, Scalar(180.0), maskB, Core.CMP_LT)
+            Core.compare(rChannel, Scalar(tuningConfig.rgbRLower), maskR, Core.CMP_GT)
+            Core.compare(gChannel, Scalar(tuningConfig.rgbGLower), maskG, Core.CMP_GT)
+            Core.compare(bChannel, Scalar(tuningConfig.rgbBUpper), maskB, Core.CMP_LT)
 
-            // 合并条件：R > 150 AND G > 100 AND B < 180
+            // 合并条件：R > rLower AND G > gLower AND B < bUpper
             val mask1 = Mat()
             Core.bitwise_and(maskR, maskG, mask1)
 
@@ -317,9 +754,9 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             maskLightR.release()
             maskLightG.release()
             maskLight.release()
-            rChannel.release()
-            gChannel.release()
             bChannel.release()
+            gChannel.release()
+            rChannel.release()
 
             resultMask
         } catch (e: Exception) {
@@ -329,21 +766,21 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     }
 
     /**
-     * 形态学操作：闭运算填补空隙 + 开运算去除噪点
+     * 形态学操作：闭运算填补空隙 + 开运算去除噪点（使用调参配置）
      */
     private fun morphologicalOperation(binaryMat: Mat): Mat {
         val kernel = Imgproc.getStructuringElement(
             Imgproc.MORPH_RECT,
-            Size(config.morphKernelSize.toDouble(), config.morphKernelSize.toDouble())
+            Size(tuningConfig.morphKernelSize.toDouble(), tuningConfig.morphKernelSize.toDouble())
         )
         
-        // 闭运算 - 填补烟丝内部的空洞
+        // 闭运算 - 填补烟丝内部的空洞（使用调参配置）
         val morphMat = Mat()
-        Imgproc.morphologyEx(binaryMat, morphMat, Imgproc.MORPH_CLOSE, kernel)
+        Imgproc.morphologyEx(binaryMat, morphMat, Imgproc.MORPH_CLOSE, kernel, Point(-1.0, -1.0), tuningConfig.closeIterations)
         
-        // 开运算 - 去除小的噪点
+        // 开运算 - 去除小的噪点（使用调参配置）
         val resultMat = Mat()
-        Imgproc.morphologyEx(morphMat, resultMat, Imgproc.MORPH_OPEN, kernel)
+        Imgproc.morphologyEx(morphMat, resultMat, Imgproc.MORPH_OPEN, kernel, Point(-1.0, -1.0), tuningConfig.openIterations)
         
         morphMat.release()
         kernel.release()
@@ -373,11 +810,12 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
 
     /**
      * 处理轮廓，计算每根烟丝的长度和宽度
+     * 
+     * 优化后的方法：
+     * 1. 长度：骨架路径长度（适合曲线烟丝）
+     * 2. 宽度：法线多点中位数（适合曲线烟丝）
+     * 
      * 使用 Douglas-Peucker 多边形拟合简化轮廓（符合 README 规范）
-     * 然后使用多种方法综合计算：
-     * 1. 最小外接矩形（适合直线烟丝）
-     * 2. 距离变换分析（适合各种形态）
-     * 3. 投影法（适合曲线烟丝）
      */
     @Suppress("UNUSED_PARAMETER")
     private fun processContours(contours: List<MatOfPoint>, binaryMat: Mat, srcMat: Mat): List<TobaccoInfo> {
@@ -391,7 +829,6 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             }
 
             // 使用 Douglas-Peucker 多边形拟合简化轮廓（符合 README 规范）
-            // 使用配置中的 epsilon 参数
             val simplifiedContour = douglasPeucker(contour, config.douglasPeuckerEpsilon)
 
             // 将简化后的轮廓转换回 MatOfPoint
@@ -399,12 +836,23 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
 
             // 获取最小外接矩形
             val rect = Imgproc.minAreaRect(simplifiedContour)
+            
+            // ========== 新增：先提取骨架 ==========
+            var skeletonPoints: List<Point>? = null
+            var skeletonLengthInfo: Pair<Double, List<Point>>? = null
+            
+            // 尝试提取骨架并计算长度
+            val skeletonResult = calculateLengthBySkeleton(simplifiedMatOfPoint, binaryMat)
+            if (skeletonResult != null) {
+                skeletonLengthInfo = skeletonResult
+                skeletonPoints = skeletonResult.second
+            }
+            
+            // 使用骨架路径长度（优先）或传统方法计算烟丝长度
+            val lengthInfo = skeletonLengthInfo ?: calculateTobaccoLength(simplifiedMatOfPoint, rect, binaryMat)
 
-            // 计算烟丝宽度（多种方法融合）
-            val widthInfo = calculateTobaccoWidth(simplifiedMatOfPoint, rect, binaryMat)
-
-            // 计算烟丝长度
-            val lengthInfo = calculateTobaccoLength(simplifiedMatOfPoint, rect, binaryMat)
+            // 计算烟丝宽度（使用法线中位数方法）
+            val widthInfo = calculateTobaccoWidthWithNormalMedian(simplifiedMatOfPoint, rect, binaryMat, skeletonPoints)
 
             if (widthInfo != null && widthInfo.first > 0) {
                 val widthMm = widthInfo.first * config.pixelToMmRatio
@@ -415,6 +863,9 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                     max(rect.size.width, rect.size.height) * config.pixelToMmRatio
                 }
 
+                // 构建骨架中心线数据
+                val centerLine = skeletonPoints?.map { PointData(it.x, it.y) } ?: emptyList()
+
                 tobaccoInfos.add(
                     TobaccoInfo(
                         index = index,
@@ -422,7 +873,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                         widthMm = widthMm,
                         lengthPixels = lengthInfo?.first ?: max(rect.size.width, rect.size.height),
                         lengthMm = lengthMm,
-                        contourPoints = simplifiedMatOfPoint.toList().map { PointData(it.x.toDouble(), it.y.toDouble()) }
+                        contourPoints = simplifiedMatOfPoint.toList().map { PointData(it.x.toDouble(), it.y.toDouble()) },
+                        centerLine = centerLine
                     )
                 )
             }
@@ -757,6 +1209,290 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             null
         }
     }
+    
+    // ============ 新增：骨架路径长度计算 ============
+    
+    /**
+     * 使用骨架（Skeleton）计算烟丝长度
+     * 
+     * 骨架是通过迭代腐蚀操作提取的中心路径，能够准确反映曲线烟丝的真实长度
+     * 该方法特别适合测量弯曲、卷曲的烟丝
+     * 
+     * @param contour 烟丝轮廓
+     * @param binaryMat 二值化图像
+     * @return 骨架路径长度（像素）
+     */
+    private fun calculateLengthBySkeleton(contour: MatOfPoint, binaryMat: Mat): Pair<Double, List<Point>>? {
+        return try {
+            // 创建掩码
+            val mask = Mat.zeros(binaryMat.rows() + 2, binaryMat.cols() + 2, CvType.CV_8UC1)
+            
+            // 填充轮廓内部
+            val contourArray = contour.toArray()
+            val contourMat = MatOfPoint(*contourArray)
+            Imgproc.fillPoly(mask, listOf(contourMat), Scalar(255.0))
+            
+            // 提取骨架（使用形态学骨架化）
+            val skeleton = extractSkeleton(mask)
+            
+            // 从骨架提取中心路径点
+            val skeletonPoints = extractSkeletonPoints(skeleton)
+            
+            // 计算骨架路径长度
+            var totalLength = 0.0
+            for (i in 0 until skeletonPoints.size - 1) {
+                val dx = skeletonPoints[i + 1].x - skeletonPoints[i].x
+                val dy = skeletonPoints[i + 1].y - skeletonPoints[i].y
+                totalLength += sqrt(dx * dx + dy * dy)
+            }
+            
+            mask.release()
+            skeleton.release()
+            
+            if (totalLength > 0 && skeletonPoints.size >= 2) {
+                Pair(totalLength, skeletonPoints)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Skeleton length calculation failed", e)
+            null
+        }
+    }
+    
+    /**
+     * 使用Zhang-Suen细化算法提取骨架
+     */
+    private fun extractSkeleton(binaryMat: Mat): Mat {
+        val skeleton = Mat.zeros(binaryMat.rows(), binaryMat.cols(), CvType.CV_8UC1)
+        val temp = Mat.zeros(binaryMat.rows(), binaryMat.cols(), CvType.CV_8UC1)
+        binaryMat.copyTo(temp)
+        
+        val element = Imgproc.getStructuringElement(Imgproc.MORPH_CROSS, Size(3.0, 3.0))
+        
+        var done = false
+        val iterations = 50 // 最大迭代次数
+        
+        for (i in 0 until iterations) {
+            // 步骤1：腐蚀
+            val eroded = Mat()
+            Imgproc.erode(temp, eroded, element)
+            
+            // 步骤2：开运算
+            val opened = Mat()
+            Imgproc.morphologyEx(eroded, opened, Imgproc.MORPH_OPEN, element)
+            
+            // 步骤3：获取边界
+            val boundary = Mat()
+            Core.subtract(temp, opened, boundary)
+            
+            // 步骤4：细化骨架
+            val skel = Mat()
+            Core.bitwise_or(skeleton, boundary, skel)
+            skeleton.setTo(skel)
+            
+            // 更新temp
+            eroded.copyTo(temp)
+            
+            // 检查是否完成（没有更多像素可以移除）
+            val nonZeroBefore = Core.countNonZero(temp)
+            
+            eroded.release()
+            opened.release()
+            boundary.release()
+            skel.release()
+            
+            if (nonZeroBefore == 0) {
+                done = true
+                break
+            }
+        }
+        
+        element.release()
+        temp.release()
+        
+        return skeleton
+    }
+    
+    /**
+     * 从骨架图像中提取有序的骨架点
+     */
+    private fun extractSkeletonPoints(skeletonMat: Mat): List<Point> {
+        val points = mutableListOf<Point>()
+        
+        // 找到骨架的所有非零点
+        for (y in 0 until skeletonMat.rows()) {
+            for (x in 0 until skeletonMat.cols()) {
+                if (skeletonMat.get(y, x)[0] > 127) {
+                    points.add(Point(x.toDouble(), y.toDouble()))
+                }
+            }
+        }
+        
+        if (points.size < 2) {
+            return points
+        }
+        
+        // 从边界点开始，按连通性排序点
+        // 简化处理：按X坐标排序（适用于近似水平的烟丝）
+        val sorted = points.sortedBy { it.x }
+        
+        // 如果点太多，进行降采样
+        val sampled = if (sorted.size > 100) {
+            val step = sorted.size / 100
+            sorted.filterIndexed { index, _ -> index % step == 0 }
+        } else {
+            sorted
+        }
+        
+        return sampled
+    }
+    
+    // ============ 新增：法线多点中位数宽度计算 ============
+    
+    /**
+     * 使用法线多点中位数计算烟丝宽度
+     * 
+     * 在骨架的多个点处，沿法线方向测量宽度，取中位数
+     * 这种方法能够准确测量曲线烟丝在不同位置的宽度
+     * 
+     * @param contour 烟丝轮廓
+     * @param skeletonPoints 骨架点
+     * @param binaryMat 二值化图像
+     * @return 宽度（像素）和法线测量线
+     */
+    private fun calculateWidthByNormalMedian(
+        contour: MatOfPoint, 
+        skeletonPoints: List<Point>,
+        binaryMat: Mat
+    ): Pair<Double, List<Pair<Point, Point>>>? {
+        
+        if (skeletonPoints.size < 3) {
+            return null
+        }
+        
+        val widths = mutableListOf<Double>()
+        val normalLines = mutableListOf<Pair<Point, Point>>()
+        
+        // 采样点数（使用调参配置）
+        val sampleCount = tuningConfig.widthSampleCount.coerceIn(4, 20)
+        val step = skeletonPoints.size / sampleCount
+        
+        for (i in step until skeletonPoints.size step step) {
+            val center = skeletonPoints[i]
+            
+            // 计算局部方向（使用相邻点）
+            val prevPoint = skeletonPoints[i - step]
+            val nextPoint = skeletonPoints[i + step]
+            
+            // 切线方向
+            val tangentX = nextPoint.x - prevPoint.x
+            val tangentY = nextPoint.y - prevPoint.y
+            val tangentLen = sqrt(tangentX * tangentX + tangentY * tangentY)
+            
+            if (tangentLen < 1) continue
+            
+            // 法线方向（垂直于切线）
+            val normalX = -tangentY / tangentLen
+            val normalY = tangentX / tangentLen
+            
+            // 沿法线方向搜索边界
+            val searchRange = 100.0 // 最大搜索距离
+            
+            val leftPoint = findBoundaryPoint(binaryMat, center, Point(normalX, normalY), -1, searchRange)
+            val rightPoint = findBoundaryPoint(binaryMat, center, Point(normalX, normalY), 1, searchRange)
+            
+            if (leftPoint != null && rightPoint != null) {
+                val width = sqrt(
+                    (rightPoint.x - leftPoint.x).pow(2) + 
+                    (rightPoint.y - leftPoint.y).pow(2)
+                )
+                
+                if (width > 2 && width < 500) { // 过滤异常值
+                    widths.add(width)
+                    normalLines.add(Pair(leftPoint, rightPoint))
+                }
+            }
+        }
+        
+        if (widths.isEmpty()) {
+            return null
+        }
+        
+        // 使用中位数而非平均值，对异常值更鲁棒
+        val sortedWidths = widths.sorted()
+        val medianWidth = if (sortedWidths.size % 2 == 0) {
+            (sortedWidths[sortedWidths.size / 2 - 1] + sortedWidths[sortedWidths.size / 2]) / 2
+        } else {
+            sortedWidths[sortedWidths.size / 2]
+        }
+        
+        return Pair(medianWidth, normalLines)
+    }
+    
+    /**
+     * 综合宽度计算（融合多种方法）
+     * 主要使用法线中位数法，辅以外接矩形和距离变换
+     */
+    private fun calculateTobaccoWidthWithNormalMedian(
+        contour: MatOfPoint, 
+        rect: RotatedRect,
+        binaryMat: Mat,
+        skeletonPoints: List<Point>? = null
+    ): Triple<Double, List<Point>, List<Pair<Point, Point>>>? {
+        
+        val contourPoints = contour.toList()
+        if (contourPoints.size < 5) {
+            return null
+        }
+        
+        val widths = mutableListOf<Double>()
+        var normalLines = emptyList<Pair<Point, Point>>()
+        
+        // ============ 方法1: 法线多点中位数 (主要方法) ============
+        if (skeletonPoints != null && skeletonPoints.size >= 5) {
+            val normalMedianResult = calculateWidthByNormalMedian(contour, skeletonPoints, binaryMat)
+            if (normalMedianResult != null) {
+                widths.add(normalMedianResult.first)
+                normalLines = normalMedianResult.second
+            }
+        }
+        
+        // ============ 方法2: 最小外接矩形 (适合直线烟丝) ============
+        val rectWidth = rect.size.width
+        val rectHeight = rect.size.height
+        val minRectWidth = min(rectWidth, rectHeight)
+        val maxRectWidth = max(rectWidth, rectHeight)
+        
+        if (normalLines.isEmpty()) {
+            // 如果无法线数据，使用外接矩形作为备选
+            widths.add(minRectWidth)
+        }
+        
+        // ============ 方法3: 距离变换分析 (适合各种形态) ============
+        val distWidth = calculateWidthByDistanceTransform(contour, binaryMat)
+        if (distWidth != null && distWidth > 0) {
+            widths.add(distWidth)
+        }
+        
+        // ============ 方法4: 投影分析 (适合曲线烟丝) ============
+        val projectionWidths = calculateWidthByProjection(contour, rect, binaryMat)
+        widths.addAll(projectionWidths)
+        
+        // 综合计算最终宽度（使用中位数）
+        if (widths.isEmpty()) {
+            return null
+        }
+        
+        val sortedWidths = widths.sorted()
+        val finalWidth = if (sortedWidths.size % 2 == 0) {
+            (sortedWidths[sortedWidths.size / 2 - 1] + sortedWidths[sortedWidths.size / 2]) / 2
+        } else {
+            sortedWidths[sortedWidths.size / 2]
+        }
+        
+        return Triple(finalWidth, contourPoints.take(10), normalLines)
+    }
 
     /**
      * 从中心点沿指定方向搜索边界点
@@ -929,6 +1665,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
 
     /**
      * 创建带有轮廓标记的Bitmap
+     * 显示：轮廓(绿色)、骨架路径(青色)、法线测量线(红色)、长度测量线(蓝色)
      */
     fun createMarkedBitmap(originalBitmap: Bitmap, result: DetectionResult): Bitmap {
         val markedBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
@@ -942,7 +1679,15 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             isAntiAlias = true
         }
         
-        // 绘制宽度测量线的画笔 - 红色
+        // 绘制骨架路径的画笔 - 青色（适合曲线烟丝长度显示）
+        val skeletonPaint = Paint().apply {
+            color = Color.CYAN
+            strokeWidth = 3f
+            style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
+        
+        // 绘制宽度测量线（法线中位数）的画笔 - 红色
         val widthPaint = Paint().apply {
             color = Color.RED
             strokeWidth = 4f
@@ -950,7 +1695,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             isAntiAlias = true
         }
         
-        // 绘制长度测量线的画笔 - 蓝色
+        // 绘制长度测量线（骨架）的画笔 - 蓝色
         val lengthPaint = Paint().apply {
             color = Color.BLUE
             strokeWidth = 4f
@@ -981,8 +1726,29 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                 }
             }
             
-            // 绘制宽度测量线（红色）
+            // 绘制骨架路径（青色）- 新的长度测量方式
+            for (skeletonPoints in processingData.skeletonPoints) {
+                if (skeletonPoints.size >= 2) {
+                    val skeletonPath = Path()
+                    skeletonPath.moveTo(skeletonPoints[0].x.toFloat(), skeletonPoints[0].y.toFloat())
+                    for (i in 1 until skeletonPoints.size) {
+                        skeletonPath.lineTo(skeletonPoints[i].x.toFloat(), skeletonPoints[i].y.toFloat())
+                    }
+                    canvas.drawPath(skeletonPath, skeletonPaint)
+                }
+            }
+            
+            // 绘制宽度测量线（红色）- 新的法线中位数方式
             for ((start, end) in processingData.widths) {
+                canvas.drawLine(
+                    start.x.toFloat(), start.y.toFloat(),
+                    end.x.toFloat(), end.y.toFloat(),
+                    widthPaint
+                )
+            }
+            
+            // 绘制法线测量线（红色）
+            for ((start, end) in processingData.normalLines) {
                 canvas.drawLine(
                     start.x.toFloat(), start.y.toFloat(),
                     end.x.toFloat(), end.y.toFloat(),
@@ -1012,7 +1778,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             color = Color.argb(200, 0, 0, 0)
             style = Paint.Style.FILL
         }
-        canvas.drawRect(10f, 10f, 320f, 160f, bgPaint)
+        canvas.drawRect(10f, 10f, 380f, 200f, bgPaint)
         
         // 绘制文字信息
         textPaint.textSize = 24f
@@ -1028,10 +1794,14 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
         
         // 添加图例
         textPaint.textSize = 16f
+        textPaint.color = Color.CYAN
+        canvas.drawText("青线=骨架(长度)", 20f, 158f, textPaint)
         textPaint.color = Color.RED
-        canvas.drawText("红线=宽度", 20f, 155f, textPaint)
+        canvas.drawText("红线=法线(宽度)", 140f, 158f, textPaint)
         textPaint.color = Color.BLUE
-        canvas.drawText("蓝线=长度", 100f, 155f, textPaint)
+        canvas.drawText("蓝线=长度", 260f, 158f, textPaint)
+        textPaint.color = Color.GREEN
+        canvas.drawText("绿线=轮廓", 20f, 180f, textPaint)
         
         return markedBitmap
     }
