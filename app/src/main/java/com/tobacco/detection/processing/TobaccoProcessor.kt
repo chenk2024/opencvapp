@@ -112,7 +112,10 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     )
 
     private var lastProcessingData: ProcessingData? = null
-    
+
+    // 保存最后一次处理后的Bitmap（带标记的图像）
+    private var lastProcessedBitmap: Bitmap? = null
+
     // 基准测试结果
     private var benchmarkResults = mutableListOf<BenchmarkTester.BenchmarkResult>()
     
@@ -792,11 +795,15 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
      * 提取轮廓
      */
     private fun extractContours(binaryMat: Mat): List<MatOfPoint> {
+        // 对细长目标做一次"桥接"预处理，减少单根烟丝被断裂成多个轮廓的情况。
+        // 这里使用较温和的大核闭运算：优先修补沿烟丝方向的小缝隙，避免过度粘连。
+        val bridgedMat = bridgeBrokenTobacco(binaryMat)
+
         val contours = mutableListOf<MatOfPoint>()
         val hierarchy = Mat()
         
         Imgproc.findContours(
-            binaryMat, 
+            bridgedMat,
             contours, 
             hierarchy, 
             Imgproc.RETR_EXTERNAL, 
@@ -804,8 +811,33 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
         )
         
         hierarchy.release()
+        bridgedMat.release()
         
         return contours
+    }
+
+    /**
+     * 桥接被光照/反光导致的烟丝断裂。
+     *
+     * 说明：
+     * - 单根烟丝常被阈值切成多段，直接 findContours 会被误计数。
+     * - 采用自适应核大小的闭运算来连接短间隙。
+     */
+    private fun bridgeBrokenTobacco(binaryMat: Mat): Mat {
+        // 在原形态学核的基础上放大，限定在合理范围，且保证为奇数。
+        val base = tuningConfig.morphKernelSize.coerceAtLeast(3)
+        val bridgeSize = (base * 3).coerceIn(5, 19).let { if (it % 2 == 0) it + 1 else it }
+
+        val bridgeKernel = Imgproc.getStructuringElement(
+            Imgproc.MORPH_ELLIPSE,
+            Size(bridgeSize.toDouble(), bridgeSize.toDouble())
+        )
+
+        val bridged = Mat()
+        Imgproc.morphologyEx(binaryMat, bridged, Imgproc.MORPH_CLOSE, bridgeKernel, Point(-1.0, -1.0), 1)
+
+        bridgeKernel.release()
+        return bridged
     }
 
     /**
@@ -1802,7 +1834,15 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
         canvas.drawText("蓝线=长度", 260f, 158f, textPaint)
         textPaint.color = Color.GREEN
         canvas.drawText("绿线=轮廓", 20f, 180f, textPaint)
-        
+
+        // 保存处理后的Bitmap
+        lastProcessedBitmap = markedBitmap
+
         return markedBitmap
     }
+
+    /**
+     * 获取最后一次处理后的Bitmap（带标记的图像）
+     */
+    fun getLastProcessedBitmap(): Bitmap? = lastProcessedBitmap
 }

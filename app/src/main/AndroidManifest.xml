@@ -45,6 +45,11 @@
             android:name=".ui.HistoryActivity"
             android:exported="false"
             android:screenOrientation="unspecified" />
+
+        <activity
+            android:name=".ui.ImageCompareActivity"
+            android:exported="false"
+            android:screenOrientation="unspecified" />
         
     </application>
 

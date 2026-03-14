@@ -48,6 +48,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final MaterialButton btnUploadResult;
 
   @NonNull
+  public final MaterialButton btnViewDetectionImage;
+
+  @NonNull
   public final MaterialButton btnViewHistory;
 
   @NonNull
@@ -108,15 +111,16 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull MaterialButton btnCapture, @NonNull MaterialButton btnFlash,
       @NonNull MaterialButton btnNewDetection, @NonNull MaterialButton btnSaveResult,
       @NonNull MaterialButton btnSettings, @NonNull MaterialButton btnStartDetection,
-      @NonNull MaterialButton btnUploadResult, @NonNull MaterialButton btnViewHistory,
-      @NonNull LinearLayout controlPanel, @NonNull ConstraintLayout detectionLayout,
-      @NonNull FrameLayout loadingLayout, @NonNull PreviewView previewView,
-      @NonNull ConstraintLayout resultLayout, @NonNull TextView tvAverageLength,
-      @NonNull TextView tvAverageWidth, @NonNull TextView tvDetectionTime,
-      @NonNull TextView tvInstruction, @NonNull TextView tvLoadingText,
-      @NonNull TextView tvMaxLength, @NonNull TextView tvMaxWidth, @NonNull TextView tvMinLength,
-      @NonNull TextView tvMinWidth, @NonNull TextView tvResultTitle, @NonNull TextView tvStatus,
-      @NonNull TextView tvTobaccoCount, @NonNull LinearLayout welcomeLayout) {
+      @NonNull MaterialButton btnUploadResult, @NonNull MaterialButton btnViewDetectionImage,
+      @NonNull MaterialButton btnViewHistory, @NonNull LinearLayout controlPanel,
+      @NonNull ConstraintLayout detectionLayout, @NonNull FrameLayout loadingLayout,
+      @NonNull PreviewView previewView, @NonNull ConstraintLayout resultLayout,
+      @NonNull TextView tvAverageLength, @NonNull TextView tvAverageWidth,
+      @NonNull TextView tvDetectionTime, @NonNull TextView tvInstruction,
+      @NonNull TextView tvLoadingText, @NonNull TextView tvMaxLength, @NonNull TextView tvMaxWidth,
+      @NonNull TextView tvMinLength, @NonNull TextView tvMinWidth, @NonNull TextView tvResultTitle,
+      @NonNull TextView tvStatus, @NonNull TextView tvTobaccoCount,
+      @NonNull LinearLayout welcomeLayout) {
     this.rootView = rootView;
     this.btnBack = btnBack;
     this.btnCapture = btnCapture;
@@ -126,6 +130,7 @@ public final class ActivityMainBinding implements ViewBinding {
     this.btnSettings = btnSettings;
     this.btnStartDetection = btnStartDetection;
     this.btnUploadResult = btnUploadResult;
+    this.btnViewDetectionImage = btnViewDetectionImage;
     this.btnViewHistory = btnViewHistory;
     this.controlPanel = controlPanel;
     this.detectionLayout = detectionLayout;
@@ -219,6 +224,12 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnUploadResult;
       MaterialButton btnUploadResult = ViewBindings.findChildViewById(rootView, id);
       if (btnUploadResult == null) {
+        break missingId;
+      }
+
+      id = R.id.btnViewDetectionImage;
+      MaterialButton btnViewDetectionImage = ViewBindings.findChildViewById(rootView, id);
+      if (btnViewDetectionImage == null) {
         break missingId;
       }
 
@@ -338,10 +349,10 @@ public final class ActivityMainBinding implements ViewBinding {
 
       return new ActivityMainBinding((ConstraintLayout) rootView, btnBack, btnCapture, btnFlash,
           btnNewDetection, btnSaveResult, btnSettings, btnStartDetection, btnUploadResult,
-          btnViewHistory, controlPanel, detectionLayout, loadingLayout, previewView, resultLayout,
-          tvAverageLength, tvAverageWidth, tvDetectionTime, tvInstruction, tvLoadingText,
-          tvMaxLength, tvMaxWidth, tvMinLength, tvMinWidth, tvResultTitle, tvStatus, tvTobaccoCount,
-          welcomeLayout);
+          btnViewDetectionImage, btnViewHistory, controlPanel, detectionLayout, loadingLayout,
+          previewView, resultLayout, tvAverageLength, tvAverageWidth, tvDetectionTime,
+          tvInstruction, tvLoadingText, tvMaxLength, tvMaxWidth, tvMinLength, tvMinWidth,
+          tvResultTitle, tvStatus, tvTobaccoCount, welcomeLayout);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

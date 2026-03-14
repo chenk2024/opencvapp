@@ -1,46 +1,54 @@
 [
     {
-        "merged": "com.tobacco.detection.app-merged_res-45:/drawable_rounded_background.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/drawable/rounded_background.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\layout_activity_history.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\activity_history.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\layout_item_history.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\item_history.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\xml_backup_rules.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\xml\\backup_rules.xml"
+    },
+    {
+        "merged": "com.tobacco.detection.app-merged_res-45:/layout_activity_image_compare.xml.flat",
+        "source": "com.tobacco.detection.app-main-47:/layout/activity_image_compare.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\drawable_circle_background.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\drawable\\circle_background.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\drawable_rounded_background.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\drawable\\rounded_background.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\layout_dialog_settings.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\dialog_settings.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\xml_data_extraction_rules.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\xml\\data_extraction_rules.xml"
     },
     {
         "merged": "com.tobacco.detection.app-merged_res-45:/layout_activity_main.xml.flat",
         "source": "com.tobacco.detection.app-main-47:/layout/activity_main.xml"
     },
     {
-        "merged": "com.tobacco.detection.app-merged_res-45:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/mipmap-anydpi-v26/ic_launcher_round.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\layout_activity_main.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\activity_main.xml"
     },
     {
-        "merged": "com.tobacco.detection.app-merged_res-45:/mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/mipmap-anydpi-v26/ic_launcher.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/layout_dialog_settings.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/layout/dialog_settings.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/layout_item_history.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/layout/item_history.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/xml_data_extraction_rules.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/xml/data_extraction_rules.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/drawable_ic_launcher_foreground.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/drawable/ic_launcher_foreground.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/drawable_circle_background.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/drawable/circle_background.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/layout_activity_history.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/layout/activity_history.xml"
-    },
-    {
-        "merged": "com.tobacco.detection.app-merged_res-45:/xml_backup_rules.xml.flat",
-        "source": "com.tobacco.detection.app-main-47:/xml/backup_rules.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-merged_res-45:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\drawable\\ic_launcher_foreground.xml"
     }
 ]

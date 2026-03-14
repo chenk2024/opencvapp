@@ -38,6 +38,7 @@ id btnSaveResult
 id btnSettings
 id btnStartDetection
 id btnUploadResult
+id btnViewDetectionImage
 id btnViewHistory
 id controlPanel
 id detectionLayout
@@ -45,6 +46,8 @@ id emptyLayout
 id etApiUrl
 id etPixelRatio
 id etTobaccoCount
+id ivOriginal
+id ivProcessed
 id loadingLayout
 id previewView
 id progressBar
@@ -63,11 +66,14 @@ id tvMaxLength
 id tvMaxWidth
 id tvMinLength
 id tvMinWidth
+id tvOriginalTitle
+id tvProcessedTitle
 id tvResultTitle
 id tvStatus
 id tvTobaccoCount
 id welcomeLayout
 layout activity_history
+layout activity_image_compare
 layout activity_main
 layout dialog_settings
 layout item_history
@@ -78,6 +84,7 @@ string app_name
 string auto_capture
 string average_length
 string average_width
+string back
 string calibration
 string camera_error
 string cancel
@@ -102,11 +109,13 @@ string mm
 string network_error
 string new_detection
 string no_history
+string original_image
 string permission_denied
 string permission_required
 string pixel_ratio
 string pixels
 string place_tobacco
+string processed_image
 string processing_error
 string result
 string result_details
@@ -122,6 +131,7 @@ string tobacco_count
 string upload_result
 string upload_success
 string upload_to_server
+string view_detection_images
 string view_history
 string welcome_subtitle
 string welcome_title

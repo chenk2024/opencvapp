@@ -3215,6 +3215,7 @@ int id btnSaveResult 0x7f080069
 int id btnSettings 0x7f08006a
 int id btnStartDetection 0x7f08006b
 int id btnUploadResult 0x7f08006c
+int id btnViewDetectionImage 0x7f080220
 int id btnViewHistory 0x7f08006d
 int id buttonPanel 0x7f08006e
 int id cache_measures 0x7f08006f
@@ -3358,6 +3359,8 @@ int id inward 0x7f0800f8
 int id is_pooling_container_tag 0x7f0800f9
 int id italic 0x7f0800fa
 int id item_touch_helper_previous_elevation 0x7f0800fb
+int id ivOriginal 0x7f080221
+int id ivProcessed 0x7f080222
 int id jumpToEnd 0x7f0800fc
 int id jumpToStart 0x7f0800fd
 int id labeled 0x7f0800fe
@@ -3623,6 +3626,8 @@ int id tvMaxLength 0x7f08021e
 int id tvMaxWidth 0x7f080200
 int id tvMinLength 0x7f08021f
 int id tvMinWidth 0x7f080201
+int id tvOriginalTitle 0x7f080223
+int id tvProcessedTitle 0x7f080224
 int id tvResultTitle 0x7f080202
 int id tvStatus 0x7f080203
 int id tvTobaccoCount 0x7f080204
@@ -3765,6 +3770,7 @@ int layout abc_search_view 0x7f0b0019
 int layout abc_select_dialog_material 0x7f0b001a
 int layout abc_tooltip 0x7f0b001b
 int layout activity_history 0x7f0b001c
+int layout activity_image_compare 0x7f0b006f
 int layout activity_main 0x7f0b001d
 int layout custom_dialog 0x7f0b001e
 int layout design_bottom_navigation_item 0x7f0b001f
@@ -3884,6 +3890,7 @@ int string appbar_scrolling_view_behavior 0x7f0f001e
 int string auto_capture 0x7f0f001f
 int string average_length 0x7f0f00da
 int string average_width 0x7f0f0020
+int string back 0x7f0f00dd
 int string bottom_sheet_behavior 0x7f0f0021
 int string bottomsheet_action_collapse 0x7f0f0022
 int string bottomsheet_action_expand 0x7f0f0023
@@ -4033,6 +4040,7 @@ int string mtrl_timepicker_confirm 0x7f0f00b0
 int string network_error 0x7f0f00b1
 int string new_detection 0x7f0f00b2
 int string no_history 0x7f0f00b3
+int string original_image 0x7f0f00de
 int string password_toggle_content_description 0x7f0f00b4
 int string path_password_eye 0x7f0f00b5
 int string path_password_eye_mask_strike_through 0x7f0f00b6
@@ -4043,6 +4051,7 @@ int string permission_required 0x7f0f00ba
 int string pixel_ratio 0x7f0f00bb
 int string pixels 0x7f0f00bc
 int string place_tobacco 0x7f0f00bd
+int string processed_image 0x7f0f00df
 int string processing_error 0x7f0f00be
 int string result 0x7f0f00bf
 int string result_details 0x7f0f00c0
@@ -4065,6 +4074,7 @@ int string tobacco_count 0x7f0f00d0
 int string upload_result 0x7f0f00d1
 int string upload_success 0x7f0f00d2
 int string upload_to_server 0x7f0f00d3
+int string view_detection_images 0x7f0f00e0
 int string view_history 0x7f0f00d4
 int string welcome_subtitle 0x7f0f00d5
 int string welcome_title 0x7f0f00d6

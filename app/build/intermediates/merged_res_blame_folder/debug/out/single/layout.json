@@ -1,18 +1,26 @@
 [
     {
-        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/item_history.xml",
-        "source": "com.tobacco.detection.app-main-47:/layout/item_history.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-mergeDebugResources-44:\\layout\\item_history.xml",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\item_history.xml"
     },
     {
-        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/dialog_settings.xml",
-        "source": "com.tobacco.detection.app-main-47:/layout/dialog_settings.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-mergeDebugResources-44:\\layout\\activity_main.xml",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/activity_image_compare.xml",
+        "source": "com.tobacco.detection.app-main-47:/layout/activity_image_compare.xml"
+    },
+    {
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-mergeDebugResources-44:\\layout\\dialog_settings.xml",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\dialog_settings.xml"
     },
     {
         "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/activity_main.xml",
         "source": "com.tobacco.detection.app-main-47:/layout/activity_main.xml"
     },
     {
-        "merged": "com.tobacco.detection.app-mergeDebugResources-44:/layout/activity_history.xml",
-        "source": "com.tobacco.detection.app-main-47:/layout/activity_history.xml"
+        "merged": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-mergeDebugResources-44:\\layout\\activity_history.xml",
+        "source": "D:\\Android\\.gradle\\daemon\\8.2\\com.tobacco.detection.app-main-47:\\layout\\activity_history.xml"
     }
 ]

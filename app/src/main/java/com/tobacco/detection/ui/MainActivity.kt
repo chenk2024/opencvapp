@@ -27,6 +27,7 @@ import org.opencv.android.OpenCVLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 /**
  * 主Activity
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private var currentSettings: AppSettings = AppSettings()
     private var lastCaptureBitmap: Bitmap? = null
     private var lastDetectionResult: DetectionResult? = null
+    private var lastProcessedBitmap: Bitmap? = null  // 处理后的图像（带标记）
     
     // 闪光灯模式
     private var flashMode = ImageCapture.FLASH_MODE_AUTO
@@ -144,6 +146,11 @@ class MainActivity : AppCompatActivity() {
         
         binding.btnNewDetection.setOnClickListener {
             newDetection()
+        }
+
+        // 查看检测图按钮
+        binding.btnViewDetectionImage.setOnClickListener {
+            viewDetectionImage()
         }
     }
 
@@ -287,7 +294,10 @@ class MainActivity : AppCompatActivity() {
                 
                 // 生成带标记的图像
                 val markedBitmap = tobaccoProcessor.createMarkedBitmap(bitmap, result)
-                
+
+                // 保存处理后的图像（带标记）用于查看
+                lastProcessedBitmap = markedBitmap
+
                 // 保存带标记的图像
                 launch(Dispatchers.IO) {
                     dataManager.saveImage(markedBitmap)
@@ -412,12 +422,47 @@ class MainActivity : AppCompatActivity() {
         lastDetectionResult = null
         lastCaptureBitmap?.recycle()
         lastCaptureBitmap = null
+        lastProcessedBitmap?.recycle()
+        lastProcessedBitmap = null
         binding.btnCapture.isEnabled = true
         binding.tvStatus.text = getString(R.string.click_to_capture)
-        
+
         // 根据设置决定是否自动拍摄
         if (currentSettings.autoCapture) {
             startAutoCapture()
+        }
+    }
+
+    /**
+     * 查看检测图（对比原图和处理后的图片）
+     */
+    private fun viewDetectionImage() {
+        val originalBitmap = lastCaptureBitmap
+        val processedBitmap = lastProcessedBitmap
+
+        if (originalBitmap == null || processedBitmap == null) {
+            Toast.makeText(this, "没有可用的图像", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 将图像保存到缓存目录
+        try {
+            val cacheDir = cacheDir
+            val originalFile = File(cacheDir, "original_${System.currentTimeMillis()}.jpg")
+            val processedFile = File(cacheDir, "processed_${System.currentTimeMillis()}.jpg")
+
+            // 保存原图
+            originalBitmap.compress(Bitmap.CompressFormat.JPEG, 90, originalFile.outputStream())
+            // 保存处理后的图
+            processedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, processedFile.outputStream())
+
+            // 跳转到图像对比页面
+            val intent = Intent(this, ImageCompareActivity::class.java)
+            intent.putExtra(ImageCompareActivity.EXTRA_ORIGINAL_PATH, originalFile.absolutePath)
+            intent.putExtra(ImageCompareActivity.EXTRA_PROCESSED_PATH, processedFile.absolutePath)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "保存图像失败: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 

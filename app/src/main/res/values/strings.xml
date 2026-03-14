@@ -55,4 +55,8 @@
     <string name="success">成功</string>
     <string name="failed">失败</string>
     <string name="loading">加载中...</string>
+    <string name="view_detection_images">查看检测图</string>
+    <string name="original_image">原图</string>
+    <string name="processed_image">处理后图片</string>
+    <string name="back">返回</string>
 </resources>

@@ -65,6 +65,10 @@
             android:name="com.tobacco.detection.ui.HistoryActivity"
             android:exported="false"
             android:screenOrientation="unspecified" />
+        <activity
+            android:name="com.tobacco.detection.ui.ImageCompareActivity"
+            android:exported="false"
+            android:screenOrientation="unspecified" />
 
         <service
             android:name="androidx.camera.core.impl.MetadataHolderService"
