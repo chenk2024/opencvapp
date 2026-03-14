@@ -653,6 +653,7 @@
     <color name="background_material_dark">@color/material_grey_850</color>
     <color name="background_material_light">@color/material_grey_50</color>
     <color name="black">#FF000000</color>
+    <color name="blue_text">#FF2196F3</color>
     <color name="bright_foreground_disabled_material_dark">#80ffffff</color>
     <color name="bright_foreground_disabled_material_light">#80000000</color>
     <color name="bright_foreground_inverse_material_dark">@color/bright_foreground_material_light</color>
@@ -2004,9 +2005,10 @@
     <string name="abc_toolbar_collapse_description">Collapse</string>
     <string name="androidx_startup" translatable="false">androidx.startup</string>
     <string name="api_url">API地址</string>
-    <string name="app_name">烟丝宽度检测</string>
+    <string name="app_name">烟丝长度宽度检测</string>
     <string name="appbar_scrolling_view_behavior" translatable="false">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
     <string name="auto_capture">自动拍摄</string>
+    <string name="average_length">平均长度</string>
     <string name="average_width">平均宽度</string>
     <string name="bottom_sheet_behavior" translatable="false">com.google.android.material.bottomsheet.BottomSheetBehavior</string>
     <string description="A description of an accessibility action to collapse the bottom sheet [CHAR LIMIT=NONE]" name="bottomsheet_action_collapse">Collapse the bottom sheet</string>
@@ -2051,6 +2053,8 @@
     <string name="hide_bottom_view_on_scroll_behavior" translatable="false">com.google.android.material.behavior.HideBottomViewOnScrollBehavior</string>
     <string description="Content description for an icon that appears in the title area of a dialog" name="icon_content_description">Dialog Icon</string>
     <string name="item_view_role_description">Tab</string>
+    <string name="length_max">最大长度</string>
+    <string name="length_min">最小长度</string>
     <string name="loading">加载中...</string>
     <string name="m3_exceed_max_badge_text_suffix" translatable="false"><ns2:g example="Some te" id="part of a long text">%1$s</ns2:g><ns2:g example="…" id="suffix">%2$s</ns2:g></string>
     <string name="m3_ref_typeface_brand_medium" translatable="false">sans-serif-medium</string>
@@ -2172,7 +2176,7 @@
     <string name="permission_required">需要相机权限</string>
     <string name="pixel_ratio">像素比</string>
     <string name="pixels">像素</string>
-    <string name="place_tobacco">请放置烟丝（30根）于圆偏振片上</string>
+    <string name="place_tobacco">请在黑色背景布上放置1-10根黄色烟丝</string>
     <string name="processing_error">图像处理错误</string>
     <string name="result">结果</string>
     <string name="result_details">检测结果详情</string>
@@ -2198,8 +2202,8 @@
     <string name="upload_success">上传成功</string>
     <string name="upload_to_server">上传到服务器</string>
     <string name="view_history">历史记录</string>
-    <string name="welcome_subtitle">基于计算机视觉的烟丝宽度测量</string>
-    <string name="welcome_title">烟丝宽度智能检测系统</string>
+    <string name="welcome_subtitle">基于计算机视觉的烟丝测量</string>
+    <string name="welcome_title">烟丝长度和宽度智能检测系统</string>
     <string name="width_max">最大宽度</string>
     <string name="width_min">最小宽度</string>
     <string name="width_std">标准差</string>

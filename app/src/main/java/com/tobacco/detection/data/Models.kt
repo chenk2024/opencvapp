@@ -16,6 +16,7 @@ data class DetectionResult(
     @SerializedName("tobacco_count")
     val tobaccoCount: Int = 0,
     
+    // 宽度统计
     @SerializedName("average_width_mm")
     val averageWidthMm: Double = 0.0,
     
@@ -25,6 +26,16 @@ data class DetectionResult(
     @SerializedName("max_width_mm")
     val maxWidthMm: Double = 0.0,
     
+    // 长度统计
+    @SerializedName("average_length_mm")
+    val averageLengthMm: Double = 0.0,
+    
+    @SerializedName("min_length_mm")
+    val minLengthMm: Double = 0.0,
+    
+    @SerializedName("max_length_mm")
+    val maxLengthMm: Double = 0.0,
+    
     @SerializedName("std_deviation")
     val stdDeviation: Double = 0.0,
     
@@ -33,6 +44,9 @@ data class DetectionResult(
     
     @SerializedName("individual_widths")
     val individualWidths: List<Double> = emptyList(),
+    
+    @SerializedName("individual_lengths")
+    val individualLengths: List<Double> = emptyList(),
     
     @SerializedName("image_path")
     val imagePath: String? = null,
@@ -68,6 +82,8 @@ data class TobaccoInfo(
     val index: Int,
     val widthPixels: Double,
     val widthMm: Double,
+    val lengthPixels: Double = 0.0,      // 烟丝长度（像素）
+    val lengthMm: Double = 0.0,            // 烟丝长度（毫米）
     val contourPoints: List<PointData> = emptyList(),
     val centerLine: List<PointData> = emptyList()
 )
@@ -131,7 +147,7 @@ data class AppSettings(
     var autoCapture: Boolean = false,
     var captureDelaySeconds: Int = 3,
     var pixelToMmRatio: Double = 0.01,
-    var expectedTobaccoCount: Int = 30,
+    var expectedTobaccoCount: Int = 10,  // 1-10根烟丝
     var saveImages: Boolean = true,
     var showOverlay: Boolean = true
 )

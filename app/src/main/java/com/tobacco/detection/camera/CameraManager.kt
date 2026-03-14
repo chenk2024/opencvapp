@@ -106,29 +106,33 @@ class CameraManager(private val context: Context) {
     /**
      * 捕获图像
      */
-    suspend fun captureImage(): Bitmap? = withContext(Dispatchers.Main) {
-        suspendCancellableCoroutine { continuation ->
-            val capture = imageCapture ?: run {
-                continuation.resume(null)
-                return@suspendCancellableCoroutine
-            }
+    suspend fun captureImage(): Bitmap? = suspendCancellableCoroutine { continuation ->
+        val capture = imageCapture ?: run {
+            continuation.resume(null)
+            return@suspendCancellableCoroutine
+        }
 
-            capture.takePicture(
-                mainExecutor,
-                object : ImageCapture.OnImageCapturedCallback() {
-                    override fun onCaptureSuccess(imageProxy: ImageProxy) {
+        capture.takePicture(
+            mainExecutor,
+            object : ImageCapture.OnImageCapturedCallback() {
+                override fun onCaptureSuccess(imageProxy: ImageProxy) {
+                    try {
                         val bitmap = imageProxyToBitmap(imageProxy)
                         imageProxy.close()
                         continuation.resume(bitmap)
-                    }
-
-                    override fun onError(exception: ImageCaptureException) {
-                        Log.e(TAG, "Image capture failed", exception)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to convert image to bitmap", e)
+                        imageProxy.close()
                         continuation.resume(null)
                     }
                 }
-            )
-        }
+
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e(TAG, "Image capture failed", exception)
+                    continuation.resume(null)
+                }
+            }
+        )
     }
 
     /**
@@ -138,25 +142,58 @@ class CameraManager(private val context: Context) {
         val buffer = imageProxy.planes[0].buffer
         val bytes = ByteArray(buffer.remaining())
         buffer.get(bytes)
-        
+
+        if (bytes.isEmpty()) {
+            return null
+        }
+
         var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        
+
+        if (bitmap == null) {
+            return null
+        }
+
         // 根据旋转角度旋转图像
         val rotationDegrees = imageProxy.imageInfo.rotationDegrees
         if (rotationDegrees != 0) {
-            val matrix = Matrix()
-            matrix.postRotate(rotationDegrees.toFloat())
-            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            try {
+                val matrix = Matrix()
+                matrix.postRotate(rotationDegrees.toFloat())
+                val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+                // 如果旋转后生成了新图，释放原图
+                if (rotatedBitmap != bitmap) {
+                    bitmap.recycle()
+                }
+                bitmap = rotatedBitmap
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to rotate bitmap", e)
+                return bitmap
+            }
         }
-        
+
         return bitmap
     }
 
     /**
      * 设置闪光灯模式
+     * @param flashMode 闪光灯模式：FLASH_MODE_AUTO, FLASH_MODE_ON, FLASH_MODE_OFF
      */
     fun setFlashMode(flashMode: Int) {
+        // 设置拍照时的闪光灯模式
         imageCapture?.flashMode = flashMode
+
+        // 控制手电筒/LED灯立即亮起
+        val torchOn = when (flashMode) {
+            ImageCapture.FLASH_MODE_ON -> true
+            ImageCapture.FLASH_MODE_OFF -> false
+            else -> false // 自动模式下不点亮手电筒
+        }
+
+        try {
+            camera?.cameraControl?.enableTorch(torchOn)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to set torch mode", e)
+        }
     }
 
     /**

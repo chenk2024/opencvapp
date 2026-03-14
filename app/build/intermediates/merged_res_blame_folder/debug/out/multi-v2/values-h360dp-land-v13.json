@@ -4,7 +4,7 @@
             "outputFile": "com.tobacco.detection.app-mergeDebugResources-43:/values-h360dp-land-v13/values-h360dp-land-v13.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\Administrator\\.gradle\\caches\\transforms-3\\6bf27c0a08c7a51da7bc9eb8b01ba35e\\transformed\\material-1.11.0\\res\\values-h360dp-land-v13\\values-h360dp-land-v13.xml",
+                    "source": "D:\\Android\\.gradle\\caches\\transforms-3\\6bf27c0a08c7a51da7bc9eb8b01ba35e\\transformed\\material-1.11.0\\res\\values-h360dp-land-v13\\values-h360dp-land-v13.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10",
                         "startColumns": "4,4,4,4,4,4,4,4,4",

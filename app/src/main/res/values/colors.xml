@@ -31,4 +31,5 @@
     <color name="overlay">#80000000</color>
     <color name="contour_color">#FF00FF00</color>
     <color name="measure_line">#FFFF0000</color>
+    <color name="blue_text">#FF2196F3</color>
 </resources>

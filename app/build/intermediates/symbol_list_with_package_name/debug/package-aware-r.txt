@@ -1361,6 +1361,7 @@ color background_floating_material_light
 color background_material_dark
 color background_material_light
 color black
+color blue_text
 color bright_foreground_disabled_material_dark
 color bright_foreground_disabled_material_light
 color bright_foreground_inverse_material_dark
@@ -3613,12 +3614,15 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id tvAverageLength
 id tvAverageWidth
 id tvDateTime
 id tvDetectionTime
 id tvInstruction
 id tvLoadingText
+id tvMaxLength
 id tvMaxWidth
+id tvMinLength
 id tvMinWidth
 id tvResultTitle
 id tvStatus
@@ -3879,6 +3883,7 @@ string api_url
 string app_name
 string appbar_scrolling_view_behavior
 string auto_capture
+string average_length
 string average_width
 string bottom_sheet_behavior
 string bottomsheet_action_collapse
@@ -3921,6 +3926,8 @@ string failed
 string hide_bottom_view_on_scroll_behavior
 string icon_content_description
 string item_view_role_description
+string length_max
+string length_min
 string loading
 string m3_exceed_max_badge_text_suffix
 string m3_ref_typeface_brand_medium

@@ -66,6 +66,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final ConstraintLayout resultLayout;
 
   @NonNull
+  public final TextView tvAverageLength;
+
+  @NonNull
   public final TextView tvAverageWidth;
 
   @NonNull
@@ -78,7 +81,13 @@ public final class ActivityMainBinding implements ViewBinding {
   public final TextView tvLoadingText;
 
   @NonNull
+  public final TextView tvMaxLength;
+
+  @NonNull
   public final TextView tvMaxWidth;
+
+  @NonNull
+  public final TextView tvMinLength;
 
   @NonNull
   public final TextView tvMinWidth;
@@ -102,11 +111,12 @@ public final class ActivityMainBinding implements ViewBinding {
       @NonNull MaterialButton btnUploadResult, @NonNull MaterialButton btnViewHistory,
       @NonNull LinearLayout controlPanel, @NonNull ConstraintLayout detectionLayout,
       @NonNull FrameLayout loadingLayout, @NonNull PreviewView previewView,
-      @NonNull ConstraintLayout resultLayout, @NonNull TextView tvAverageWidth,
-      @NonNull TextView tvDetectionTime, @NonNull TextView tvInstruction,
-      @NonNull TextView tvLoadingText, @NonNull TextView tvMaxWidth, @NonNull TextView tvMinWidth,
-      @NonNull TextView tvResultTitle, @NonNull TextView tvStatus, @NonNull TextView tvTobaccoCount,
-      @NonNull LinearLayout welcomeLayout) {
+      @NonNull ConstraintLayout resultLayout, @NonNull TextView tvAverageLength,
+      @NonNull TextView tvAverageWidth, @NonNull TextView tvDetectionTime,
+      @NonNull TextView tvInstruction, @NonNull TextView tvLoadingText,
+      @NonNull TextView tvMaxLength, @NonNull TextView tvMaxWidth, @NonNull TextView tvMinLength,
+      @NonNull TextView tvMinWidth, @NonNull TextView tvResultTitle, @NonNull TextView tvStatus,
+      @NonNull TextView tvTobaccoCount, @NonNull LinearLayout welcomeLayout) {
     this.rootView = rootView;
     this.btnBack = btnBack;
     this.btnCapture = btnCapture;
@@ -122,11 +132,14 @@ public final class ActivityMainBinding implements ViewBinding {
     this.loadingLayout = loadingLayout;
     this.previewView = previewView;
     this.resultLayout = resultLayout;
+    this.tvAverageLength = tvAverageLength;
     this.tvAverageWidth = tvAverageWidth;
     this.tvDetectionTime = tvDetectionTime;
     this.tvInstruction = tvInstruction;
     this.tvLoadingText = tvLoadingText;
+    this.tvMaxLength = tvMaxLength;
     this.tvMaxWidth = tvMaxWidth;
+    this.tvMinLength = tvMinLength;
     this.tvMinWidth = tvMinWidth;
     this.tvResultTitle = tvResultTitle;
     this.tvStatus = tvStatus;
@@ -245,6 +258,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvAverageLength;
+      TextView tvAverageLength = ViewBindings.findChildViewById(rootView, id);
+      if (tvAverageLength == null) {
+        break missingId;
+      }
+
       id = R.id.tvAverageWidth;
       TextView tvAverageWidth = ViewBindings.findChildViewById(rootView, id);
       if (tvAverageWidth == null) {
@@ -269,9 +288,21 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvMaxLength;
+      TextView tvMaxLength = ViewBindings.findChildViewById(rootView, id);
+      if (tvMaxLength == null) {
+        break missingId;
+      }
+
       id = R.id.tvMaxWidth;
       TextView tvMaxWidth = ViewBindings.findChildViewById(rootView, id);
       if (tvMaxWidth == null) {
+        break missingId;
+      }
+
+      id = R.id.tvMinLength;
+      TextView tvMinLength = ViewBindings.findChildViewById(rootView, id);
+      if (tvMinLength == null) {
         break missingId;
       }
 
@@ -308,8 +339,9 @@ public final class ActivityMainBinding implements ViewBinding {
       return new ActivityMainBinding((ConstraintLayout) rootView, btnBack, btnCapture, btnFlash,
           btnNewDetection, btnSaveResult, btnSettings, btnStartDetection, btnUploadResult,
           btnViewHistory, controlPanel, detectionLayout, loadingLayout, previewView, resultLayout,
-          tvAverageWidth, tvDetectionTime, tvInstruction, tvLoadingText, tvMaxWidth, tvMinWidth,
-          tvResultTitle, tvStatus, tvTobaccoCount, welcomeLayout);
+          tvAverageLength, tvAverageWidth, tvDetectionTime, tvInstruction, tvLoadingText,
+          tvMaxLength, tvMaxWidth, tvMinLength, tvMinWidth, tvResultTitle, tvStatus, tvTobaccoCount,
+          welcomeLayout);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

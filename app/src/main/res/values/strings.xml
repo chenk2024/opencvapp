@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">烟丝宽度检测</string>
-    <string name="welcome_title">烟丝宽度智能检测系统</string>
-    <string name="welcome_subtitle">基于计算机视觉的烟丝宽度测量</string>
+    <string name="app_name">烟丝长度宽度检测</string>
+    <string name="welcome_title">烟丝长度和宽度智能检测系统</string>
+    <string name="welcome_subtitle">基于计算机视觉的烟丝测量</string>
     <string name="start_detection">开始检测</string>
     <string name="view_history">历史记录</string>
     <string name="settings">设置</string>
@@ -30,7 +30,10 @@
     <string name="width_min">最小宽度</string>
     <string name="width_max">最大宽度</string>
     <string name="width_std">标准差</string>
-    <string name="place_tobacco">请放置烟丝（30根）于圆偏振片上</string>
+    <string name="average_length">平均长度</string>
+    <string name="length_min">最小长度</string>
+    <string name="length_max">最大长度</string>
+    <string name="place_tobacco">请在黑色背景布上放置1-10根黄色烟丝</string>
     <string name="click_to_capture">点击拍摄</string>
     <string name="auto_capture">自动拍摄</string>
     <string name="manual_capture">手动拍摄</string>

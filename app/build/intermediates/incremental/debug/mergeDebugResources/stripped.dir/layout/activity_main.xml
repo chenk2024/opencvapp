@@ -294,6 +294,77 @@
 
                 </LinearLayout>
 
+                <!-- 长度信息 -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/average_length"
+                    style="@style/ResultLabel" />
+
+                <TextView
+                    android:id="@+id/tvAverageLength"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/ResultText"
+                    android:textColor="@color/blue_text"
+                    android:layout_marginBottom="8dp"
+                    tools:text="10.50 mm" />
+
+                <!-- 最小/最大长度 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/length_min"
+                            style="@style/ResultLabel" />
+
+                        <TextView
+                            android:id="@+id/tvMinLength"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/blue_text"
+                            android:textStyle="bold"
+                            tools:text="10.00 mm" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/length_max"
+                            style="@style/ResultLabel" />
+
+                        <TextView
+                            android:id="@+id/tvMaxLength"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textColor="@color/blue_text"
+                            android:textStyle="bold"
+                            tools:text="11.00 mm" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
                 <!-- 检测时间 -->
                 <TextView
                     android:id="@+id/tvDetectionTime"

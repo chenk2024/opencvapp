@@ -23,6 +23,7 @@ import com.tobacco.detection.data.DetectionStatus
 import com.tobacco.detection.data.ProcessingConfig
 import com.tobacco.detection.databinding.ActivityMainBinding
 import com.tobacco.detection.processing.TobaccoProcessor
+import org.opencv.android.OpenCVLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,6 +65,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 初始化 OpenCV
+        if (!OpenCVLoader.initLocal()) {
+            android.util.Log.e("OpenCV", "无法初始化 OpenCV 库")
+        }
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
@@ -236,20 +243,29 @@ class MainActivity : AppCompatActivity() {
     private fun captureImage() {
         binding.btnCapture.isEnabled = false
         binding.tvStatus.text = getString(R.string.detecting)
-        
+
         lifecycleScope.launch {
-            val bitmap = withContext(Dispatchers.IO) {
-                cameraManager.captureImage()
-            }
-            
-            if (bitmap != null) {
-                lastCaptureBitmap = bitmap
-                processImage(bitmap)
-            } else {
-                Toast.makeText(this@MainActivity, R.string.camera_error, Toast.LENGTH_SHORT).show()
+            try {
+                val bitmap = cameraManager.captureImage()
+
+                if (bitmap != null) {
+                    lastCaptureBitmap = bitmap
+                    processImage(bitmap)
+                } else {
+                    Toast.makeText(this@MainActivity, R.string.camera_error, Toast.LENGTH_SHORT).show()
+                    binding.btnCapture.isEnabled = true
+                    binding.tvStatus.text = getString(R.string.click_to_capture)
+
+                    // 自动拍摄模式下继续倒计时
+                    if (currentSettings.autoCapture) {
+                        startAutoCapture()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "${getString(R.string.camera_error)}: ${e.message}", Toast.LENGTH_SHORT).show()
                 binding.btnCapture.isEnabled = true
                 binding.tvStatus.text = getString(R.string.click_to_capture)
-                
+
                 // 自动拍摄模式下继续倒计时
                 if (currentSettings.autoCapture) {
                     startAutoCapture()
@@ -301,10 +317,17 @@ class MainActivity : AppCompatActivity() {
             binding.tvResultTitle.text = getString(R.string.detection_complete)
             binding.tvResultTitle.setTextColor(getColor(R.color.success))
             
+            // 宽度信息
             binding.tvAverageWidth.text = String.format("%.4f mm", result.averageWidthMm)
             binding.tvTobaccoCount.text = result.tobaccoCount.toString()
             binding.tvMinWidth.text = String.format("%.4f mm", result.minWidthMm)
             binding.tvMaxWidth.text = String.format("%.4f mm", result.maxWidthMm)
+            
+            // 长度信息
+            binding.tvAverageLength.text = String.format("%.4f mm", result.averageLengthMm)
+            binding.tvMinLength.text = String.format("%.4f mm", result.minLengthMm)
+            binding.tvMaxLength.text = String.format("%.4f mm", result.maxLengthMm)
+            
             binding.tvDetectionTime.text = getString(R.string.detection_time) + ": ${String.format("%.1f", result.detectionTimeMs / 1000.0)} " + getString(R.string.seconds)
         } else {
             binding.tvResultTitle.text = getString(R.string.detection_failed)
@@ -314,6 +337,9 @@ class MainActivity : AppCompatActivity() {
             binding.tvTobaccoCount.text = "0"
             binding.tvMinWidth.text = "--"
             binding.tvMaxWidth.text = "--"
+            binding.tvAverageLength.text = "--"
+            binding.tvMinLength.text = "--"
+            binding.tvMaxLength.text = "--"
             binding.tvDetectionTime.text = ""
         }
         
@@ -442,7 +468,7 @@ class MainActivity : AppCompatActivity() {
                 // 保存设置
                 val pixelRatio = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPixelRatio)?.text.toString().toDoubleOrNull() ?: 0.01
                 val apiUrl = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etApiUrl)?.text.toString() ?: ""
-                val tobaccoCount = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etTobaccoCount)?.text.toString().toIntOrNull() ?: 30
+                val tobaccoCount = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etTobaccoCount)?.text.toString().toIntOrNull() ?: 10
                 val autoCapture = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchAutoCapture)?.isChecked ?: false
                 val saveImage = dialogView.findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.switchSaveImage)?.isChecked ?: true
                 

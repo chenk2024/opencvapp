@@ -54,7 +54,7 @@
             android:name="com.tobacco.detection.ui.MainActivity"
             android:configChanges="orientation|screenSize"
             android:exported="true"
-            android:screenOrientation="landscape" >
+            android:screenOrientation="unspecified" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -64,7 +64,7 @@
         <activity
             android:name="com.tobacco.detection.ui.HistoryActivity"
             android:exported="false"
-            android:screenOrientation="landscape" />
+            android:screenOrientation="unspecified" />
 
         <service
             android:name="androidx.camera.core.impl.MetadataHolderService"

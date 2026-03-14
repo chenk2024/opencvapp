@@ -3,6 +3,7 @@ local
 color accent
 color background
 color black
+color blue_text
 color contour_color
 color divider
 color error
@@ -52,12 +53,15 @@ id resultLayout
 id switchAutoCapture
 id switchSaveImage
 id titleBar
+id tvAverageLength
 id tvAverageWidth
 id tvDateTime
 id tvDetectionTime
 id tvInstruction
 id tvLoadingText
+id tvMaxLength
 id tvMaxWidth
+id tvMinLength
 id tvMinWidth
 id tvResultTitle
 id tvStatus
@@ -72,6 +76,7 @@ mipmap ic_launcher_round
 string api_url
 string app_name
 string auto_capture
+string average_length
 string average_width
 string calibration
 string camera_error
@@ -89,6 +94,8 @@ string detection_time
 string exit
 string export_excel
 string failed
+string length_max
+string length_min
 string loading
 string manual_capture
 string mm

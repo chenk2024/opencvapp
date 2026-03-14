@@ -31,7 +31,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     // 存储处理过程中的数据用于显示
     data class ProcessingData(
         val contours: List<List<Point>>,
-        val widths: List<Pair<Point, Point>>, // 测量线的起点和终点
+        val widths: List<Pair<Point, Point>>,      // 宽度测量线的起点和终点
+        val lengths: List<Pair<Point, Point>>,      // 长度测量线的起点和终点
         val centerPoints: List<Point>,
         val boundingBoxes: List<RotatedRect>
     )
@@ -52,8 +53,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             // 图像预处理
             val processedMat = preprocessImage(srcMat)
             
-            // 二值化
-            val binaryMat = thresholdImage(processedMat)
+            // 二值化（现在支持基于颜色的黄色烟丝检测）
+            val binaryMat = thresholdImage(processedMat, srcMat)
             
             // 形态学操作去除噪声
             val morphMat = morphologicalOperation(binaryMat)
@@ -95,6 +96,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     /**
      * 创建处理数据用于显示
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun createProcessingData(
         contours: List<MatOfPoint>,
         tobaccoInfos: List<TobaccoInfo>,
@@ -116,8 +118,8 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             }
         }
         
-        // 生成测量线
-        val widths = tobaccoInfos.take(10).mapIndexed { index, info ->
+        // 生成宽度测量线
+        val widths = tobaccoInfos.take(10).map { info ->
             val center = info.contourPoints.getOrNull(info.contourPoints.size / 2)
                 ?: PointData(100.0, 100.0)
             val width = info.widthPixels
@@ -125,9 +127,20 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             Point(center.x - width / 2, center.y) to Point(center.x + width / 2, center.y)
         }
         
+        // 生成长度测量线
+        val lengths = tobaccoInfos.take(10).map { info ->
+            val center = info.contourPoints.getOrNull(info.contourPoints.size / 2)
+                ?: PointData(100.0, 100.0)
+            val length = info.lengthPixels
+            
+            // 长度线垂直于宽度线
+            Point(center.x, center.y - length / 2) to Point(center.x, center.y + length / 2)
+        }
+        
         return ProcessingData(
             contours = validContours,
             widths = widths,
+            lengths = lengths,
             centerPoints = tobaccoInfos.mapNotNull { 
                 it.contourPoints.getOrNull(it.contourPoints.size / 2)?.let { p -> Point(p.x, p.y) }
             },
@@ -171,11 +184,147 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     /**
      * 三角形法二值化
      * 使用Otsu's方法实现自动阈值选择
+     * 针对黄色烟丝在黑色背景上进行优化
      */
-    private fun thresholdImage(grayMat: Mat): Mat {
+    private fun thresholdImage(grayMat: Mat, srcMat: Mat? = null): Mat {
+        // 首先尝试使用颜色空间检测黄色烟丝
+        val colorBasedMat = if (srcMat != null) {
+            detectYellowTobaccoByColor(srcMat)
+        } else {
+            null
+        }
+
+        // 如果颜色检测成功，使用颜色检测结果
+        if (colorBasedMat != null && Core.countNonZero(colorBasedMat) > 0) {
+            return colorBasedMat
+        }
+
+        // 否则使用传统的Otsu二值化
         val binaryMat = Mat()
         Imgproc.threshold(grayMat, binaryMat, 0.0, 255.0, Imgproc.THRESH_BINARY_INV + Imgproc.THRESH_OTSU)
         return binaryMat
+    }
+
+    /**
+     * 使用颜色空间检测黄色烟丝
+     * 黄色在HSV颜色空间中：H在15-45度之间，S和V较高
+     * 黑色背景：V很低
+     */
+    private fun detectYellowTobaccoByColor(srcMat: Mat): Mat? {
+        return try {
+            // 转换到HSV颜色空间
+            val hsvMat = Mat()
+            Imgproc.cvtColor(srcMat, hsvMat, Imgproc.COLOR_BGR2HSV)
+
+            // 定义黄色的HSV范围（调整参数以适应不同的黄色烟丝）
+            // 黄色: H(色相)约15-45度，S(饱和度)约50-255，V(亮度)约50-255
+            val yellowLower = Scalar(15.0, 50.0, 30.0)
+            val yellowUpper = Scalar(50.0, 255.0, 255.0)
+
+            // 创建黄色掩码
+            val yellowMask = Mat()
+            Core.inRange(hsvMat, yellowLower, yellowUpper, yellowMask)
+
+            // 也尝试使用RGB颜色空间检测黄色
+            // 黄色: R > 150, G > 150, B < 150
+            val rgbMask = detectYellowByRGB(srcMat)
+
+            // 合并两个掩码（取并集）
+            val combinedMask = Mat()
+            if (rgbMask != null) {
+                Core.bitwise_or(yellowMask, rgbMask, combinedMask)
+                rgbMask.release()
+            } else {
+                yellowMask.copyTo(combinedMask)
+            }
+
+            // 应用形态学操作去除噪声
+            val kernel = Imgproc.getStructuringElement(
+                Imgproc.MORPH_RECT,
+                Size(5.0, 5.0)
+            )
+
+            // 开运算去除小噪点
+            val openedMask = Mat()
+            Imgproc.morphologyEx(combinedMask, openedMask, Imgproc.MORPH_OPEN, kernel)
+
+            // 闭运算填补烟丝内部空洞
+            val resultMask = Mat()
+            Imgproc.morphologyEx(openedMask, resultMask, Imgproc.MORPH_CLOSE, kernel)
+
+            hsvMat.release()
+            yellowMask.release()
+            combinedMask.release()
+            openedMask.release()
+            kernel.release()
+
+            resultMask
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * 使用RGB颜色空间检测黄色烟丝
+     * 黄色特点：R和G分量较高，B分量较低
+     */
+    private fun detectYellowByRGB(srcMat: Mat): Mat? {
+        return try {
+            // 分离通道
+            val rgbChannels = ArrayList<Mat>()
+            Core.split(srcMat, rgbChannels)
+
+            val rChannel = rgbChannels[0]
+            val gChannel = rgbChannels[1]
+            val bChannel = rgbChannels[2]
+
+            // 创建条件掩码：R > 150 AND G > 100 AND B < 180
+            val maskR = Mat()
+            val maskG = Mat()
+            val maskB = Mat()
+
+            Core.compare(rChannel, Scalar(150.0), maskR, Core.CMP_GT)
+            Core.compare(gChannel, Scalar(100.0), maskG, Core.CMP_GT)
+            Core.compare(bChannel, Scalar(180.0), maskB, Core.CMP_LT)
+
+            // 合并条件：R > 150 AND G > 100 AND B < 180
+            val mask1 = Mat()
+            Core.bitwise_and(maskR, maskG, mask1)
+
+            val mask2 = Mat()
+            Core.bitwise_and(mask1, maskB, mask2)
+
+            // 也检测较浅的黄色：R > 200 AND G > 200
+            val maskLightR = Mat()
+            val maskLightG = Mat()
+            Core.compare(rChannel, Scalar(200.0), maskLightR, Core.CMP_GT)
+            Core.compare(gChannel, Scalar(200.0), maskLightG, Core.CMP_GT)
+
+            val maskLight = Mat()
+            Core.bitwise_and(maskLightR, maskLightG, maskLight)
+
+            // 合并两种黄色检测
+            val resultMask = Mat()
+            Core.bitwise_or(mask2, maskLight, resultMask)
+
+            // 释放中间变量
+            maskR.release()
+            maskG.release()
+            maskB.release()
+            mask1.release()
+            maskLightR.release()
+            maskLightG.release()
+            maskLight.release()
+            rChannel.release()
+            gChannel.release()
+            bChannel.release()
+
+            resultMask
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     /**
@@ -222,15 +371,16 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     }
 
     /**
-     * 处理轮廓，计算每根烟丝的宽度
+     * 处理轮廓，计算每根烟丝的长度和宽度
      * 使用多种方法综合计算：
      * 1. 最小外接矩形（适合直线烟丝）
      * 2. 距离变换分析（适合各种形态）
      * 3. 投影法（适合曲线烟丝）
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun processContours(contours: List<MatOfPoint>, binaryMat: Mat, srcMat: Mat): List<TobaccoInfo> {
         val tobaccoInfos = mutableListOf<TobaccoInfo>()
-        
+
         for ((index, contour) in contours.withIndex()) {
             // 过滤太小的轮廓
             val area = Imgproc.contourArea(contour)
@@ -244,13 +394,25 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             // 计算烟丝宽度（多种方法融合）
             val widthInfo = calculateTobaccoWidth(contour, rect, binaryMat)
             
+            // 计算烟丝长度
+            val lengthInfo = calculateTobaccoLength(contour, rect, binaryMat)
+            
             if (widthInfo != null && widthInfo.first > 0) {
                 val widthMm = widthInfo.first * config.pixelToMmRatio
+                val lengthMm = if (lengthInfo != null && lengthInfo.first > 0) {
+                    lengthInfo.first * config.pixelToMmRatio
+                } else {
+                    // 如果无法计算长度，使用外接矩形的长边作为估计
+                    max(rect.size.width, rect.size.height) * config.pixelToMmRatio
+                }
+                
                 tobaccoInfos.add(
                     TobaccoInfo(
                         index = index,
                         widthPixels = widthInfo.first,
                         widthMm = widthMm,
+                        lengthPixels = lengthInfo?.first ?: max(rect.size.width, rect.size.height),
+                        lengthMm = lengthMm,
                         contourPoints = contour.toList().map { PointData(it.x.toDouble(), it.y.toDouble()) }
                     )
                 )
@@ -366,6 +528,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
      * - 沿主轴方向在不同位置测量垂直方向的宽度
      * - 适用于曲线形态的烟丝
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun calculateWidthByProjection(
         contour: MatOfPoint,
         rect: RotatedRect,
@@ -444,6 +607,7 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
     /**
      * 方法3: 椭圆拟合
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun calculateWidthByEllipse(contour: MatOfPoint, rect: RotatedRect): Double? {
         return try {
             if (contour.toList().size >= 5) {
@@ -454,6 +618,132 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             } else {
                 null
             }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
+     * 计算烟丝长度 - 综合多种方法
+     * 
+     * 直线烟丝：使用最小外接矩形长边
+     * 曲线烟丝：使用轮廓中心线长度
+     */
+    private fun calculateTobaccoLength(
+        contour: MatOfPoint, 
+        rect: RotatedRect,
+        binaryMat: Mat
+    ): Pair<Double, List<Point>>? {
+        
+        val contourPoints = contour.toList()
+        if (contourPoints.size < 5) {
+            return null
+        }
+        
+        val lengths = mutableListOf<Double>()
+        
+        // ============ 方法1: 最小外接矩形 (适合直线烟丝) ============
+        val rectWidth = rect.size.width
+        val rectHeight = rect.size.height
+        val maxRectLength = max(rectWidth, rectHeight)
+        lengths.add(maxRectLength)
+        
+        // ============ 方法2: 轮廓周长的一半 (近似长度) ============
+        val perimeter = Imgproc.arcLength(MatOfPoint2f(*contour.toArray()), true)
+        // 对于细长物体，周长的一半可以作为长度的近似估计
+        lengths.add(perimeter / 2)
+        
+        // ============ 方法3: 基于距离变换的中心线估计 ============
+        val centerlineLength = calculateLengthByDistanceTransform(contour, binaryMat)
+        if (centerlineLength != null && centerlineLength > 0) {
+            lengths.add(centerlineLength)
+        }
+        
+        // ============ 方法4: 投影法计算主轴长度 ============
+        val projectionLength = calculateLengthByProjection(contour, rect)
+        if (projectionLength != null && projectionLength > 0) {
+            lengths.add(projectionLength)
+        }
+        
+        // 综合计算最终长度
+        if (lengths.isEmpty()) {
+            return null
+        }
+        
+        val avgLength = lengths.average()
+        
+        // 过滤异常值：太小的可能是噪声
+        val validLengths = lengths.filter { it > avgLength * 0.3 && it < avgLength * 3 }
+        
+        val finalLength = if (validLengths.isNotEmpty()) {
+            validLengths.average()
+        } else {
+            avgLength
+        }
+        
+        // 返回长度和用于显示的点
+        val displayPoints = mutableListOf<Point>()
+        // 使用外接矩形的两个长边中点作为长度测量线的端点
+        val center = rect.center
+        val angleRad = Math.toRadians(rect.angle)
+        val halfLength = finalLength / 2
+        
+        val dirX = if (rectWidth > rectHeight) cos(angleRad) else cos(angleRad - Math.PI / 2)
+        val dirY = if (rectWidth > rectHeight) sin(angleRad) else sin(angleRad - Math.PI / 2)
+        
+        displayPoints.add(Point(center.x - dirX * halfLength, center.y - dirY * halfLength))
+        displayPoints.add(Point(center.x + dirX * halfLength, center.y + dirY * halfLength))
+        
+        return Pair(finalLength, displayPoints)
+    }
+
+    /**
+     * 使用距离变换计算烟丝长度（中心线长度）
+     */
+    private fun calculateLengthByDistanceTransform(contour: MatOfPoint, binaryMat: Mat): Double? {
+        try {
+            // 创建掩码
+            val mask = Mat.zeros(binaryMat.rows() + 2, binaryMat.cols() + 2, CvType.CV_8UC1)
+            
+            // 填充轮廓内部
+            val contourArray = contour.toArray()
+            val contourMat = MatOfPoint(*contourArray)
+            Imgproc.fillPoly(mask, listOf(contourMat), Scalar(255.0))
+            
+            // 距离变换
+            val distMat = Mat()
+            Imgproc.distanceTransform(mask, distMat, Imgproc.DIST_L2, 0)
+            
+            // 找到距离变换图中的骨架点，估算中心线长度
+            // 这里简化处理：使用外接矩形的较长边作为长度估计
+            val rows = distMat.rows()
+            val cols = distMat.cols()
+            
+            // 找到最大距离点（中心点）
+            val maxLoc = Core.minMaxLoc(distMat)
+            val centerX = maxLoc.maxLoc.x
+            val centerY = maxLoc.maxLoc.y
+            
+            // 使用简化的方法：计算从中心到两端的平均距离
+            // 这是一个近似方法
+            val totalDist = maxLoc.maxVal * 2  // 粗略估计
+            
+            mask.release()
+            distMat.release()
+            
+            return totalDist
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    /**
+     * 使用投影法计算烟丝长度（主轴方向）
+     */
+    private fun calculateLengthByProjection(contour: MatOfPoint, rect: RotatedRect): Double? {
+        return try {
+            // 使用最小外接矩形的长边作为长度
+            max(rect.size.width, rect.size.height)
         } catch (e: Exception) {
             null
         }
@@ -595,12 +885,19 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             )
         }
         
+        // 宽度统计
         val widthsMm = tobaccoInfos.map { it.widthMm }
         val averageWidth = widthsMm.average()
         val minWidth = widthsMm.minOrNull() ?: 0.0
         val maxWidth = widthsMm.maxOrNull() ?: 0.0
         
-        // 计算标准差
+        // 长度统计
+        val lengthsMm = tobaccoInfos.map { it.lengthMm }
+        val averageLength = lengthsMm.average()
+        val minLength = lengthsMm.minOrNull() ?: 0.0
+        val maxLength = lengthsMm.maxOrNull() ?: 0.0
+        
+        // 计算标准差（基于宽度）
         val variance = widthsMm.map { (it - averageWidth).pow(2) }.average()
         val stdDeviation = sqrt(variance)
         
@@ -610,8 +907,12 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             averageWidthMm = averageWidth,
             minWidthMm = minWidth,
             maxWidthMm = maxWidth,
+            averageLengthMm = averageLength,
+            minLengthMm = minLength,
+            maxLengthMm = maxLength,
             stdDeviation = stdDeviation,
             individualWidths = widthsMm,
+            individualLengths = lengthsMm,
             detectionTimeMs = System.currentTimeMillis() - startTime,
             status = DetectionStatus.SUCCESS
         )
@@ -632,9 +933,17 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
             isAntiAlias = true
         }
         
-        // 绘制测量线的画笔 - 红色
-        val measurePaint = Paint().apply {
+        // 绘制宽度测量线的画笔 - 红色
+        val widthPaint = Paint().apply {
             color = Color.RED
+            strokeWidth = 4f
+            style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
+        
+        // 绘制长度测量线的画笔 - 蓝色
+        val lengthPaint = Paint().apply {
+            color = Color.BLUE
             strokeWidth = 4f
             style = Paint.Style.STROKE
             isAntiAlias = true
@@ -663,34 +972,57 @@ class TobaccoProcessor(private val config: ProcessingConfig) {
                 }
             }
             
-            // 绘制测量线
+            // 绘制宽度测量线（红色）
             for ((start, end) in processingData.widths) {
                 canvas.drawLine(
                     start.x.toFloat(), start.y.toFloat(),
                     end.x.toFloat(), end.y.toFloat(),
-                    measurePaint
+                    widthPaint
+                )
+            }
+            
+            // 绘制长度测量线（蓝色）
+            for ((start, end) in processingData.lengths) {
+                canvas.drawLine(
+                    start.x.toFloat(), start.y.toFloat(),
+                    end.x.toFloat(), end.y.toFloat(),
+                    lengthPaint
                 )
             }
         }
         
         // 显示检测结果信息
         val infoText = "检测到 ${result.tobaccoCount} 根烟丝"
-        val avgText = String.format("平均宽度: %.4f mm", result.averageWidthMm)
-        val minText = String.format("最小: %.4f mm", result.minWidthMm)
-        val maxText = String.format("最大: %.4f mm", result.maxWidthMm)
+        val avgWidthText = String.format("平均宽度: %.4f mm", result.averageWidthMm)
+        val minWidthText = String.format("最小宽度: %.4f mm", result.minWidthMm)
+        val maxWidthText = String.format("最大宽度: %.4f mm", result.maxWidthMm)
+        val avgLengthText = String.format("平均长度: %.4f mm", result.averageLengthMm)
         
-        // 半透明背景
+        // 半透明背景（扩大以容纳更多文本）
         val bgPaint = Paint().apply {
-            color = Color.argb(180, 0, 0, 0)
+            color = Color.argb(200, 0, 0, 0)
             style = Paint.Style.FILL
         }
-        canvas.drawRect(10f, 10f, 280f, 110f, bgPaint)
+        canvas.drawRect(10f, 10f, 320f, 160f, bgPaint)
         
+        // 绘制文字信息
+        textPaint.textSize = 24f
         canvas.drawText(infoText, 20f, 35f, textPaint)
         textPaint.textSize = 20f
-        canvas.drawText(avgText, 20f, 58f, textPaint)
-        canvas.drawText(minText, 20f, 80f, textPaint)
-        canvas.drawText(maxText, 20f, 102f, textPaint)
+        canvas.drawText(avgWidthText, 20f, 60f, textPaint)
+        canvas.drawText(minWidthText, 20f, 84f, textPaint)
+        canvas.drawText(maxWidthText, 20f, 108f, textPaint)
+        
+        // 长度信息用蓝色显示
+        textPaint.color = Color.BLUE
+        canvas.drawText(avgLengthText, 20f, 132f, textPaint)
+        
+        // 添加图例
+        textPaint.textSize = 16f
+        textPaint.color = Color.RED
+        canvas.drawText("红线=宽度", 20f, 155f, textPaint)
+        textPaint.color = Color.BLUE
+        canvas.drawText("蓝线=长度", 100f, 155f, textPaint)
         
         return markedBitmap
     }

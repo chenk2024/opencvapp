@@ -1360,6 +1360,7 @@ int color background_floating_material_light 0x7f050020
 int color background_material_dark 0x7f050021
 int color background_material_light 0x7f050022
 int color black 0x7f050023
+int color blue_text 0x7f05031b
 int color bright_foreground_disabled_material_dark 0x7f050024
 int color bright_foreground_disabled_material_light 0x7f050025
 int color bright_foreground_inverse_material_dark 0x7f050026
@@ -3612,12 +3613,15 @@ int id transition_position 0x7f0801f7
 int id transition_scene_layoutid_cache 0x7f0801f8
 int id transition_transform 0x7f0801f9
 int id triangle 0x7f0801fa
+int id tvAverageLength 0x7f08021d
 int id tvAverageWidth 0x7f0801fb
 int id tvDateTime 0x7f0801fc
 int id tvDetectionTime 0x7f0801fd
 int id tvInstruction 0x7f0801fe
 int id tvLoadingText 0x7f0801ff
+int id tvMaxLength 0x7f08021e
 int id tvMaxWidth 0x7f080200
+int id tvMinLength 0x7f08021f
 int id tvMinWidth 0x7f080201
 int id tvResultTitle 0x7f080202
 int id tvStatus 0x7f080203
@@ -3878,6 +3882,7 @@ int string api_url 0x7f0f001c
 int string app_name 0x7f0f001d
 int string appbar_scrolling_view_behavior 0x7f0f001e
 int string auto_capture 0x7f0f001f
+int string average_length 0x7f0f00da
 int string average_width 0x7f0f0020
 int string bottom_sheet_behavior 0x7f0f0021
 int string bottomsheet_action_collapse 0x7f0f0022
@@ -3920,6 +3925,8 @@ int string failed 0x7f0f0046
 int string hide_bottom_view_on_scroll_behavior 0x7f0f0047
 int string icon_content_description 0x7f0f0048
 int string item_view_role_description 0x7f0f0049
+int string length_max 0x7f0f00db
+int string length_min 0x7f0f00dc
 int string loading 0x7f0f004a
 int string m3_exceed_max_badge_text_suffix 0x7f0f004b
 int string m3_ref_typeface_brand_medium 0x7f0f004c

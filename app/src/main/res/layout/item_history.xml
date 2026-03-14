@@ -90,7 +90,7 @@
                 android:layout_weight="1"
                 android:textColor="@color/text_primary"
                 android:textSize="12sp"
-                tools:text="30根" />
+                tools:text="5根" />
 
             <TextView
                 android:layout_width="0dp"
